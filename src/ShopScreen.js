@@ -6,7 +6,7 @@ class ShopScreen extends Phaser.Scene {
     preload() {
         this.load.image("button", "assets/icons/button.png");
         this.load.image("pizza", "assets/icons/pizza.png");
-        this.load.image("meat_single", "assets/ui/meat_without_bg_2.png");
+        this.load.image("meat", "assets/ui/meat_without_bg_2.png");
         this.load.image("apple", "assets/ui/apple_without_bg.png");
         this.load.image("shop_bg", "assets/backgrounds/shop_background.jpeg");
         this.load.image('fish', "assets/ui/fish_without_bg.png");
@@ -24,7 +24,7 @@ class ShopScreen extends Phaser.Scene {
 
         const foods = [
             {key: "pizza", label: "Pizza", cost: 15},
-            {key: "meat_single", label: "Meat", cost: 20},
+            {key: "meat", label: "Meat", cost: 20},
             {key: "apple", label: "Apple", cost: 5},
             {key: "fish", label: "Fish", cost: 10}
         ];

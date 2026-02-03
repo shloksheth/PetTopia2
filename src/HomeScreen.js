@@ -10,8 +10,9 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("gem_icon", "assets/icons/gems.png");
 
         this.load.image("pizza", "assets/icons/pizza.png");
-        this.load.image("meat", "assets/ui/meat_without_bg.png");
+        this.load.image('meat', 'assets/ui/meat_without_bg_2.png');
         this.load.image("apple", "assets/ui/apple_without_bg.png");
+        this.load.image('fish', "assets/ui/fish_without_bg.png");
 
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
@@ -173,9 +174,10 @@ class HomeScreen extends Phaser.Scene {
         const border = this.add.rectangle(360, 640, 520, 420).setStrokeStyle(4, 0xffffff).setOrigin(0.5);
 
         const foods = [
-            { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger" },
-            { key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger" },
-            { key: "apple", label: "Apple", restore: 10, desc: "Restores 10 hunger" }
+            {key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger"},
+            {key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger"},
+            {key: "apple", label: "Apple", restore: 5, desc: "Restores 5 hunger"},
+            {key: "fish", label: "Fish", restore: 10, desc: "Restores 10 hunger"}
         ];
 
         const buttons = [];
