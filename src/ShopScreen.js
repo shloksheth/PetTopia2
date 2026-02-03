@@ -14,15 +14,17 @@ class ShopScreen extends Phaser.Scene {
             color: "#ffffff"
         });
 
-        // Back button
-        const backBtn = this.add.rectangle(360, 500, 300, 100, 0xff5555)
-            .setInteractive();
+        // Back button background
+        const backBtn = this.add.rectangle(360, 500, 300, 100, 0xe94e4e)
+            .setInteractive({ useHandCursor: true });
 
-        this.add.text(280, 470, "Back to Home", {
+        // Back button text
+        this.add.text(260, 470, "Back to Home", {
             fontSize: "36px",
             color: "#ffffff"
         });
 
+        // Button click → go back to HomeScreen
         backBtn.on("pointerdown", () => {
             this.scene.start("HomeScreen");
         });

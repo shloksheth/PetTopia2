@@ -23,7 +23,7 @@ class TopBar {
             fontSize: "48px",
             color: "#ffffff"
         })
-        .setInteractive()
+        .setInteractive({ useHandCursor: true })
         .on("pointerdown", () => this.openSettings());
     }
 
