@@ -3,36 +3,24 @@ class TopBar {
         this.scene = scene;
 
         // Background bar
-        this.bar = scene.add.rectangle(0, 0, 720, 120, 0x333333)
+        this.bar = scene.add.rectangle(0, 0, 720, 120, 0x000000, 0.4)
             .setOrigin(0);
 
         // Coins
-        this.coinText = scene.add.text(20, 30, "Coins: 0", {
+        this.coinText = scene.add.text(20, 30, "Coins: 100", {
             fontSize: "32px",
             color: "#ffffff"
         });
 
         // Gems
-        this.gemText = scene.add.text(20, 70, "Gems: 0", {
+        this.gemText = scene.add.text(20, 70, "Gems: 5", {
             fontSize: "32px",
             color: "#ffffff"
         });
-
-        // Settings button
-        this.settingsBtn = scene.add.text(600, 40, "⚙️", {
-            fontSize: "48px",
-            color: "#ffffff"
-        })
-        .setInteractive({ useHandCursor: true })
-        .on("pointerdown", () => this.openSettings());
     }
 
     updateUI(coins, gems) {
         this.coinText.setText("Coins: " + coins);
         this.gemText.setText("Gems: " + gems);
-    }
-
-    openSettings() {
-        alert("Settings menu coming soon");
     }
 }
