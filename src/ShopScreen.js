@@ -30,10 +30,10 @@ class ShopScreen extends Phaser.Scene {
         ];
 
         foods.forEach((food, i) => {
-            const y = 200 + i * 180;
+            const y = 200 + i * 260;
 
-            this.add.image(120, y, food.key).setScale(0.6).setOrigin(0.5);
-            this.add.text(200, y - 30, food.label, {
+            this.add.image(115, y, food.key).setScale(0.6).setOrigin(0.5);
+            this.add.text(200, y - 15, food.label, {
                 fontSize: "36px",
                 color: "#ffffff"
             });
@@ -62,12 +62,12 @@ class ShopScreen extends Phaser.Scene {
             });
         });
 
-        const backBtn = this.add.image(360, 1100, "button")
+        const backBtn = this.add.image(360, 1200, "button")
             .setInteractive({ useHandCursor: true })
             .setScale(1.2)
             .setOrigin(0.5);
 
-        this.add.text(310, 1070, "Back", {
+        this.add.text(310, 1170, "Back", {
             fontSize: "40px",
             color: "#ffffff"
         });
@@ -75,7 +75,5 @@ class ShopScreen extends Phaser.Scene {
         backBtn.on("pointerdown", () => {
             this.scene.start("HomeScreen");
         });
-        console.log("Loaded data:", this.data);
-
     }
 }
