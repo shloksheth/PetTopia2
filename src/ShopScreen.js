@@ -6,12 +6,16 @@ class ShopScreen extends Phaser.Scene {
     preload() {
         this.load.image("button", "assets/icons/button.png");
         this.load.image("pizza", "assets/icons/pizza.png");
-        this.load.image("meat", "assets/ui/meat_without_bg.png");
+        this.load.image("meat_single", "assets/ui/meat_without_bg_2.png");
         this.load.image("apple", "assets/ui/apple_without_bg.png");
+        this.load.image("shop_bg", "assets/backgrounds/shop_background.jpeg");
+        this.load.image('fish', "assets/ui/fish_without_bg.png");
     }
 
     create() {
         this.data = GameData.load();
+
+        this.add.image(500, 600, 'shop_bg').setOrigin(0.5);
 
         this.add.text(360, 80, "Shop", {
             fontSize: "48px",
@@ -19,9 +23,10 @@ class ShopScreen extends Phaser.Scene {
         }).setOrigin(0.5);
 
         const foods = [
-            { key: "pizza", label: "Pizza", cost: 10 },
-            { key: "meat", label: "Meat", cost: 15 },
-            { key: "apple", label: "Apple", cost: 5 }
+            {key: "pizza", label: "Pizza", cost: 15},
+            {key: "meat_single", label: "Meat", cost: 20},
+            {key: "apple", label: "Apple", cost: 5},
+            {key: "fish", label: "Fish", cost: 10}
         ];
 
         foods.forEach((food, i) => {
@@ -53,7 +58,6 @@ class ShopScreen extends Phaser.Scene {
                     this.data.coins -= food.cost;
                     this.data.inventory[food.key]++;
                     GameData.save(this.data);
-                    this.scene.start("HomeScreen");
                 }
             });
         });
