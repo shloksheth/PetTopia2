@@ -8,9 +8,6 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("button", "assets/icons/button.png");
         this.load.image("coin_icon", "assets/icons/gold coin.png");
         this.load.image("gem_icon", "assets/icons/gems.png");
-        this.load.image("potion", "assets/icons/potion.png");
-        this.load.image("heart", "assets/icons/heart.png");
-        this.load.image("lightning", "assets/icons/lightning.png");
 
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
@@ -30,7 +27,6 @@ class HomeScreen extends Phaser.Scene {
         const padding = 30;
         const iconSize = 48;
 
-        // Coin
         this.add.image(padding, padding + 10, "coin_icon")
             .setOrigin(0)
             .setDisplaySize(iconSize, iconSize);
@@ -39,7 +35,6 @@ class HomeScreen extends Phaser.Scene {
             color: "#ffffff"
         });
 
-        // Gem
         this.add.image(padding + 160, padding + 10, "gem_icon")
             .setOrigin(0)
             .setDisplaySize(iconSize, iconSize);
@@ -48,12 +43,7 @@ class HomeScreen extends Phaser.Scene {
             color: "#ffffff"
         });
 
-        // Status Bars
-        this.createStatusBar("potion", this.data.hunger, 400, 40);
-        this.createStatusBar("heart", 80, 400, 90); // happiness placeholder
-        this.createStatusBar("lightning", this.data.energy, 400, 140);
-
-        // Pet name (click to rename)
+        // Pet name
         this.nameText = this.add.text(360, 200, this.data.name, {
             fontSize: "48px",
             color: "#ffffff",
@@ -63,6 +53,13 @@ class HomeScreen extends Phaser.Scene {
         this.nameText.on("pointerdown", () => {
             this.showRenameUI();
         });
+
+        // Status Bars
+        this.bars = {
+            hunger: this.createBar("Hunger", 360, 280, 0x00cc66, this.data.hunger),
+            happiness: this.createBar("Happiness", 360, 340, 0xff3366, 80),
+            energy: this.createBar("Energy", 360, 400, 0xffcc00, this.data.energy)
+        };
 
         // Pet animation
         this.pet = this.add.sprite(360, 720, "idle1").setScale(1.2);
@@ -92,14 +89,30 @@ class HomeScreen extends Phaser.Scene {
         });
     }
 
-    createStatusBar(iconKey, percent, x, y) {
-        const icon = this.add.image(x, y, iconKey).setScale(0.5).setOrigin(0, 0.5);
-        const barWidth = 200;
-        const barHeight = 20;
-        const barBg = this.add.rectangle(x + 60, y, barWidth, barHeight, 0x333333).setOrigin(0, 0.5);
-        const fillColor = iconKey === "potion" ? 0x00cc66 : iconKey === "heart" ? 0xff3366 : 0xffcc00;
-        const barFill = this.add.rectangle(x + 60, y, (barWidth * percent) / 100, barHeight, fillColor).setOrigin(0, 0.5);
-        return { icon, barBg, barFill };
+    createBar(label, x, y, color, percent) {
+        const barWidth = 300;
+        const barHeight = 24;
+
+        this.add.text(x - barWidth / 2, y - 30, label, {
+            fontSize: "28px",
+            color: "#ffffff"
+        });
+
+        const bg = this.add.rectangle(x, y, barWidth, barHeight, 0x444444).setOrigin(0.5);
+        const fill = this.add.rectangle(x - barWidth / 2, y, (barWidth * percent) / 100, barHeight, color)
+            .setOrigin(0, 0.5);
+
+        return { bg, fill, color, width: barWidth };
+    }
+
+    setBarValue(type, value) {
+        const bar = this.bars[type];
+        if (!bar) return;
+
+        const clamped = Phaser.Math.Clamp(value, 0, 100);
+        bar.fill.width = (bar.width * clamped) / 100;
+        this.data[type] = clamped;
+        GameData.save(this.data);
     }
 
     showRenameUI() {
