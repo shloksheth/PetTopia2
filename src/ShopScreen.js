@@ -71,5 +71,7 @@ class ShopScreen extends Phaser.Scene {
         backBtn.on("pointerdown", () => {
             this.scene.start("HomeScreen");
         });
+        console.log("Loaded data:", this.data);
+
     }
 }
