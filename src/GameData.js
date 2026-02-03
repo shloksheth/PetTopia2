@@ -7,7 +7,12 @@ class GameData {
                 coins: 100,
                 gems: 5,
                 hunger: 100,
-                energy: 100
+                energy: 100,
+                inventory: {
+                    pizza: 0,
+                    meat: 0,
+                    apple: 0
+                }
             };
         }
         return JSON.parse(raw);
