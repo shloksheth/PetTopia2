@@ -1,14 +1,17 @@
+const GAME_WIDTH = 720;
+const GAME_HEIGHT = 1280;
+
 const config = {
     type: Phaser.AUTO,
-    width: 720,
-    height: 1280,
-    backgroundColor: "#222222",
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
+    backgroundColor: "#000000",
 
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: 720,
-        height: 1280
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT
     },
 
     scene: [HomeScreen, ShopScreen]

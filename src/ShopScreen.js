@@ -3,28 +3,25 @@ class ShopScreen extends Phaser.Scene {
         super("ShopScreen");
     }
 
-    create() {
-        // Top bar
-        this.topbar = new TopBar(this);
-        this.topbar.updateUI(100, 5);
+    preload() {
+        this.load.image("button", "assets/icons/button.png");
+    }
 
-        // Title
+    create() {
         this.add.text(200, 200, "SHOP SCREEN", {
             fontSize: "48px",
             color: "#ffffff"
         });
 
-        // Back button background
-        const backBtn = this.add.rectangle(360, 500, 300, 100, 0xe94e4e)
-            .setInteractive({ useHandCursor: true });
+        const backBtn = this.add.image(360, 1100, "button")
+            .setInteractive({ useHandCursor: true })
+            .setScale(1.2);
 
-        // Back button text
-        this.add.text(260, 470, "Back to Home", {
-            fontSize: "36px",
+        this.add.text(300, 1070, "Back", {
+            fontSize: "40px",
             color: "#ffffff"
         });
 
-        // Button click → go back to HomeScreen
         backBtn.on("pointerdown", () => {
             this.scene.start("HomeScreen");
         });
