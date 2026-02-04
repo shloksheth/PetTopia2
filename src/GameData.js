@@ -65,10 +65,13 @@ const GameData = {
 
     switchToPet(index) {
         if (index >= 0 && index < this.pets.length) {
-            this.activePetIndex = index;
+            // Save current pet's state before switching
             this.save();
+            this.activePetIndex = index;
+            this.save(); // Save again after switching
         }
     },
+
 
     addPet(name, type) {
         if (this.pets.length >= 2) return false;

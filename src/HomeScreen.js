@@ -32,9 +32,11 @@ class HomeScreen extends Phaser.Scene {
 
 
         // Ensure all stats are numbers
-        this.data.hunger = Number(this.data.hunger) || 100;
-        this.data.energy = Number(this.data.energy) || 100;
-        this.data.happiness = Number(this.data.happiness) || 100;
+        this.data.hunger = Number(this.data.hunger ?? 100);
+        this.data.energy = Number(this.data.energy ?? 100);
+        this.data.happiness = Number(this.data.happiness ?? 100);
+        GameData.save();
+
 
         this.closeFoodPopup();
 
@@ -157,7 +159,7 @@ class HomeScreen extends Phaser.Scene {
         shopBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
         shopBtn.on("pointerdown", () => this.scene.start("ShopScreen"));
 
-        const vetBtn = this.add.container(centerX, buttonY); 
+        const vetBtn = this.add.container(centerX, buttonY);
         const vetIcon = this.add.text(0, 0, "🏥", {
             fontSize: "48px"
         }).setOrigin(0.5);
@@ -297,10 +299,12 @@ class HomeScreen extends Phaser.Scene {
             }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
 
             switchBtn.on("pointerdown", () => {
+                GameData.save(); // Save current pet's state
                 GameData.switchToPet(i);
-                scene.loadPet(); // You’ll define this to update the pet sprite and stats
+                scene.loadPet(); // Refresh pet sprite and stats
                 [overlay, panel, title, ...elements].forEach(el => el.destroy());
             });
+
 
             const removeBtn = scene.add.text(500, y + 40, "Remove", {
                 fontSize: "20px",
@@ -536,16 +540,17 @@ class HomeScreen extends Phaser.Scene {
     }
 
     loadPet() {
-        const pet = GameData.getActivePet();
+        GameData.save(); // Save current pet before switching
+        this.data = GameData.getActivePet(); // ← THIS is the missing line
 
         if (this.petSprite) this.petSprite.destroy();
 
-        const spriteKey = pet.type === "dog" ? "idle1" : "idle1"; // update if you have cat sprites
+        const spriteKey = this.data.type === "dog" ? "idle1" : "idle1"; // update if needed
         this.petSprite = this.add.sprite(360, 800, spriteKey).setScale(1.0);
-        this.petSprite.play("dog_idle"); // or "cat_idle" if needed
+        this.petSprite.play("dog_idle");
 
-        this.nameText.setText(pet.name);
-        this.updateStatBars(pet);
+        this.nameText.setText(this.data.name);
+        this.updateStatBars(this.data);
     }
 
 
