@@ -19,42 +19,63 @@ class TopBar {
     createCounters() {
         const { scene, data } = this;
 
-        scene.add.image(40, 60, "coin_icon")
+        // Coin Box
+        const coinBox = scene.add.image(100, 60, "orange_box")
             .setOrigin(0.5)
-            .setDisplaySize(48, 48)
+            .setDisplaySize(110, 60) // compact and slightly taller
             .setDepth(11);
 
-        this.coinText = scene.add.text(80, 60, data.coins.toString(), {
-            fontSize: "32px",
+        scene.add.image(75, 60, "coin_icon")
+            .setOrigin(0.5)
+            .setDisplaySize(36, 36)
+            .setDepth(12);
+
+        this.coinText = scene.add.text(100, 60, data.coins.toString(), {
+            fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#ffffff",
             stroke: "#000000",
-            strokeThickness: 4
-        }).setOrigin(0, 0.5).setDepth(11);
+            strokeThickness: 3
+        }).setOrigin(0, 0.5).setDepth(12);
 
-        scene.add.image(200, 60, "gem_icon")
+        // Gem Box
+        const gemBox = scene.add.image(240, 60, "orange_box")
             .setOrigin(0.5)
-            .setDisplaySize(48, 48)
+            .setDisplaySize(110, 60)
             .setDepth(11);
+
+        scene.add.image(215, 60, "gem_icon")
+            .setOrigin(0.5)
+            .setDisplaySize(36, 36)
+            .setDepth(12);
 
         this.gemText = scene.add.text(240, 60, data.gems.toString(), {
-            fontSize: "32px",
+            fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#ffffff",
             stroke: "#000000",
-            strokeThickness: 4
-        }).setOrigin(0, 0.5).setDepth(11);
+            strokeThickness: 3
+        }).setOrigin(0, 0.5).setDepth(12);
+
+        // Gear Box
+        const gearBox = scene.add.image(scene.scale.width - 60, 60, "orange_box")
+            .setOrigin(0.5)
+            .setDisplaySize(70, 60)
+            .setDepth(11);
 
         this.gear = scene.add.text(scene.scale.width - 60, 60, "⚙️", {
-            fontSize: "40px",
+            fontSize: "30px",
             fontFamily: "Arial",
             color: "#ffffff",
             stroke: "#000000",
             strokeThickness: 3
-        }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5).setDepth(12).setInteractive({ useHandCursor: true });
 
         this.gear.on("pointerdown", () => this.togglePopup());
     }
+
+
+
 
     updateCounters(newData) {
         this.animateText(this.coinText, parseInt(this.coinText.text), newData.coins);
@@ -74,6 +95,29 @@ class TopBar {
                 textObj.setText(Math.floor(tween.getValue()).toString());
             }
         });
+    }
+    createTopBarBox(x, y, iconKey, text, textStyle = {}) {
+        const container = this.add.container(x, y);
+
+        const box = this.add.image(0, 0, "orange_box")
+            .setOrigin(0.5)
+            .setDisplaySize(180, 80); // Adjust size as needed
+
+        const icon = this.add.image(-50, 0, iconKey)
+            .setScale(0.5)
+            .setOrigin(0.5);
+
+        const label = this.add.text(20, 0, text, {
+            fontSize: "28px",
+            fontFamily: "Arial Black",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 3,
+            ...textStyle
+        }).setOrigin(0, 0.5);
+
+        container.add([box, icon, label]);
+        return container;
     }
 
     createSettingsPopup() {
