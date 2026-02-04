@@ -128,6 +128,19 @@ class HomeScreen extends Phaser.Scene {
 
         const buttonY = 1180;
 
+        const sleepBtn = this.add.container(centerX - 300, buttonY);
+        const sleepIcon = this.add.text(0, 0, "🛏️", {
+            fontSize: "48px"
+        }).setOrigin(0.5);
+        const sleepLabel = this.add.text(0, 50, "Sleep", {
+            fontSize: "24px",
+            fontStyle: "bold",
+            color: "#ffffff"
+        }).setOrigin(0.5);
+        sleepBtn.add([sleepIcon, sleepLabel]);
+        sleepBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
+        sleepBtn.on("pointerdown", () => this.scene.start("SleepScreen"));
+
         // Food Button with 🍖 emoji
         const foodBtn = this.add.container(centerX - 150, buttonY);
         const foodIcon = this.add.text(0, 0, "🍖", {
@@ -612,38 +625,70 @@ class HomeScreen extends Phaser.Scene {
 
 
     showRenameUI() {
-        if (this.renameInput) return;
+    if (this.renameInput) return;
 
-        // Create input box
-        this.renameInput = document.createElement("input");
-        this.renameInput.type = "text";
-        this.renameInput.placeholder = "Pet name";
-        this.renameInput.style.position = "absolute";
-        this.renameInput.style.top = "260px";
-        this.renameInput.style.left = "50%";
-        this.renameInput.style.transform = "translateX(-50%)";
-        this.renameInput.style.fontSize = "24px";
-        this.renameInput.style.padding = "6px 12px";
-        this.renameInput.style.border = "2px solid #000";
-        this.renameInput.style.borderRadius = "6px";
-        this.renameInput.style.zIndex = 1000;
-        document.body.appendChild(this.renameInput);
-        this.renameInput.focus();
+    // Create input box
+    this.renameInput = document.createElement("input");
+    this.renameInput.type = "text";
+    this.renameInput.placeholder = "Enter new name";
+    this.renameInput.style.position = "absolute";
+    this.renameInput.style.top = "260px";
+    this.renameInput.style.left = "50%";
+    this.renameInput.style.transform = "translateX(-50%)";
+    this.renameInput.style.fontSize = "24px";
+    this.renameInput.style.padding = "10px 16px";
+    this.renameInput.style.width = "220px";
+    this.renameInput.style.border = "2px solid #00ccff";
+    this.renameInput.style.borderRadius = "8px";
+    this.renameInput.style.backgroundColor = "#111";
+    this.renameInput.style.color = "#fff";
+    this.renameInput.style.zIndex = 1000;
+    this.renameInput.style.outline = "none";
+    this.renameInput.style.textAlign = "center";
+    document.body.appendChild(this.renameInput);
+    this.renameInput.focus();
 
-        // Listen for Enter key
-        this.renameInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                const newName = this.renameInput.value.trim();
-                if (newName.length > 0) {
-                    this.data.name = newName;
-                    GameData.save();
-                    this.nameText.setText(newName);
-                }
-                this.renameInput.remove();
-                this.renameInput = null;
-            }
-        });
-    }
+    // Create submit button with checkmark
+    this.renameButton = document.createElement("button");
+    this.renameButton.innerText = "✅ Rename";
+    this.renameButton.style.position = "absolute";
+    this.renameButton.style.top = "310px";
+    this.renameButton.style.left = "50%";
+    this.renameButton.style.transform = "translateX(-50%)";
+    this.renameButton.style.fontSize = "20px";
+    this.renameButton.style.padding = "8px 16px";
+    this.renameButton.style.border = "none";
+    this.renameButton.style.borderRadius = "6px";
+    this.renameButton.style.backgroundColor = "#00ccff";
+    this.renameButton.style.color = "#000";
+    this.renameButton.style.fontWeight = "bold";
+    this.renameButton.style.cursor = "pointer";
+    this.renameButton.style.zIndex = 1000;
+    document.body.appendChild(this.renameButton);
+
+    const submitRename = () => {
+        const newName = this.renameInput.value.trim();
+        if (newName.length > 0) {
+            this.data.name = newName;
+            GameData.save();
+            this.nameText.setText(newName);
+        }
+        this.renameInput.remove();
+        this.renameButton.remove();
+        this.renameInput = null;
+        this.renameButton = null;
+    };
+
+    this.renameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            submitRename();
+        }
+    });
+
+    this.renameButton.addEventListener("click", submitRename);
+}
+
+
 
     showFoodPopup() {
         if (this.foodPopup) return;

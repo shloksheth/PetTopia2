@@ -29,7 +29,7 @@ const GameData = {
         } else {
             // First-time setup
             this.pets = [{
-                name: "Buddy",
+                name: "Bella",
                 type: "dog",
                 hunger: 100,
                 energy: 100,
