@@ -41,7 +41,7 @@ class HomeScreen extends Phaser.Scene {
         const bg = this.add.image(0, 0, "home_bg").setOrigin(0);
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
-        this.data.coins += 5;
+
         this.registry.events.emit("update-stats", this.data);
 
         this.nameText = this.add.text(centerX, 200, this.data.name, {
