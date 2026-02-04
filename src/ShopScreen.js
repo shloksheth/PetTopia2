@@ -29,17 +29,10 @@ class ShopScreen extends Phaser.Scene {
         }).setOrigin(0.5);
 
         const foods = [
-<<<<<<< HEAD
-            {key: "pizza", label: "Pizza", cost: 15},
-            {key: "meat", label: "Meat", cost: 20},
-            {key: "apple", label: "Apple", cost: 5},
-            {key: "fish", label: "Fish", cost: 10}
-=======
             { key: "pizza", label: "Pizza", cost: 15 },
             { key: "meat", label: "Meat", cost: 20 },
             { key: "apple", label: "Apple", cost: 5 },
             { key: "fish", label: "Fish", cost: 10 }
->>>>>>> 0f1631a29bd925b602420cf5c383e22f40fa870c
         ];
 
         foods.forEach((food, i) => {

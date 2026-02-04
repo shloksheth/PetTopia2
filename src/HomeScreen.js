@@ -10,13 +10,11 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("gem_icon", "assets/icons/gems.png");
 
         this.load.image("pizza", "assets/icons/pizza.png");
-<<<<<<< HEAD
+
         this.load.image('meat', 'assets/ui/meat_without_bg_2.png');
         this.load.image("apple", "assets/ui/apple_without_bg.png");
         this.load.image('fish', "assets/ui/fish_without_bg.png");
-=======
-        this.load.image("meat", "assets/ui/meat_without_bg_2.png");
-        this.load.image("apple", "assets/ui/apple_without_bg.png");
+
         this.load.image("happiness_gradient", "assets/icons/gradient.png");
         this.load.image("smile1", "assets/icons/smile1.png");
         this.load.image("smile2", "assets/icons/smile2.png");
@@ -24,8 +22,6 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("smile4", "assets/icons/smile4.png");
         this.load.image("smile5", "assets/icons/smile5.png");
 
-
->>>>>>> 0f1631a29bd925b602420cf5c383e22f40fa870c
 
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
@@ -66,10 +62,6 @@ class HomeScreen extends Phaser.Scene {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         this.renameBtn.on("pointerdown", () => this.showRenameUI());
-
-
-       
-
 
         this.bars = {
             hunger: this.createBar("Hunger", centerX, 340, 0x00cc66, this.data.hunger),
@@ -284,13 +276,6 @@ class HomeScreen extends Phaser.Scene {
         return Phaser.Math.Linear(bottom, top, happiness / 100);
     }
 
-
-
-
-
-
-
-
     showRenameUI() {
         if (this.renameInput) return;
 
@@ -332,17 +317,10 @@ class HomeScreen extends Phaser.Scene {
         const border = this.add.rectangle(360, 640, 520, 420).setStrokeStyle(4, 0xffffff).setOrigin(0.5);
 
         const foods = [
-<<<<<<< HEAD
-            {key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger"},
-            {key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger"},
-            {key: "apple", label: "Apple", restore: 5, desc: "Restores 5 hunger"},
-            {key: "fish", label: "Fish", restore: 10, desc: "Restores 10 hunger"}
-=======
             { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger" },
             { key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger" },
             { key: "apple", label: "Apple", restore: 10, desc: "Restores 10 hunger" },
             { key: "fish", label: "Fish", restore: 15, desc: "Restores 15 hunger" }
->>>>>>> 0f1631a29bd925b602420cf5c383e22f40fa870c
         ];
 
 
