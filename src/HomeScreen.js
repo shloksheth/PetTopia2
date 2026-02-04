@@ -62,7 +62,7 @@ class HomeScreen extends Phaser.Scene {
         this.renameBtn.on("pointerdown", () => this.showRenameUI());
 
 
-       
+
 
 
         this.bars = {
@@ -164,15 +164,12 @@ class HomeScreen extends Phaser.Scene {
         shopBtn.on("pointerdown", () => this.scene.start("ShopScreen"));
         // Decrease stats over time
         this.time.addEvent({
-            delay: 6000, // every 10 seconds
+            delay: 6000, // every 6 seconds
             loop: true,
             callback: () => {
                 this.setBarValue("hunger", this.data.hunger - 2);
                 this.setBarValue("energy", this.data.energy - 1.5);
-
-                if (this.data.hunger < 90 || this.data.energy < 95) {
-                    this.setBarValue("happiness", this.data.happiness - 1);
-                }
+                this.setBarValue("happiness", this.data.happiness - 1);
             }
 
         });
@@ -228,28 +225,13 @@ class HomeScreen extends Phaser.Scene {
 
 
     setBarValue(type, value) {
-        const bar = this.bars[type];
-        if (!bar) return;
-
         const clamped = Phaser.Math.Clamp(value, 0, 100);
-        bar.fill.clear();
-        bar.fill.fillStyle(bar.color, 1);
-        bar.fill.fillRoundedRect(
-            bar.x - bar.width / 2,
-            bar.bgY - bar.height / 2,
-            (bar.width * clamped) / 100,
-            bar.height,
-            14
-        );
-
-        bar.valueText.setText(`${Math.round(clamped)}/100`);
         this.data[type] = clamped;
         GameData.save(this.data);
 
         if (type === "happiness") {
             const newY = this.getHappinessY(clamped);
 
-            // Move the smiley
             this.tweens.add({
                 targets: this.happinessFace,
                 y: newY,
@@ -257,21 +239,34 @@ class HomeScreen extends Phaser.Scene {
                 ease: "Sine.easeInOut"
             });
 
-            // Change smiley image
             const index = Math.min(4, Math.floor((100 - clamped) / 20));
             this.happinessFace.setTexture(`smile${index + 1}`);
 
-            // Resize gray overlay above the smiley
             const overlayTop = this.happinessBarY - this.happinessBarHeight / 2;
-            const overlayBottom = newY - 24; // 24 = half smiley height
+            const overlayBottom = newY - 24;
             const overlayHeight = overlayBottom - overlayTop;
 
             this.happinessOverlay.setDisplaySize(this.happinessBarWidth, overlayHeight);
             this.happinessOverlay.setPosition(this.happinessBarX, overlayTop + overlayHeight / 2);
             this.happinessText.setText(`${Math.round(clamped)}/100`);
+        } else {
+            const bar = this.bars[type];
+            if (!bar) return;
 
+            bar.fill.clear();
+            bar.fill.fillStyle(bar.color, 1);
+            bar.fill.fillRoundedRect(
+                bar.x - bar.width / 2,
+                bar.bgY - bar.height / 2,
+                (bar.width * clamped) / 100,
+                bar.height,
+                14
+            );
+
+            bar.valueText.setText(`${Math.round(clamped)}/100`);
         }
     }
+
     getHappinessY(happiness) {
         const top = this.happinessBarY - this.happinessBarHeight / 2;
         const bottom = this.happinessBarY + this.happinessBarHeight / 2;
