@@ -164,13 +164,13 @@ class HomeScreen extends Phaser.Scene {
         shopBtn.on("pointerdown", () => this.scene.start("ShopScreen"));
         // Decrease stats over time
         this.time.addEvent({
-            delay: 10000, // every 10 seconds
+            delay: 6000, // every 10 seconds
             loop: true,
             callback: () => {
                 this.setBarValue("hunger", this.data.hunger - 2);
-                this.setBarValue("energy", this.data.energy - 1);
+                this.setBarValue("energy", this.data.energy - 1.5);
 
-                if (this.data.hunger < 80 || this.data.energy < 90) {
+                if (this.data.hunger < 90 || this.data.energy < 95) {
                     this.setBarValue("happiness", this.data.happiness - 1);
                 }
             }
