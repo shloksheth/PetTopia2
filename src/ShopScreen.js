@@ -40,15 +40,15 @@ class ShopScreen extends Phaser.Scene {
         this.createItemDisplay(this.foods[this.currentIndex]);
 
         // Arrows
-        this.leftArrow = this.add.image(120, 1100, "left_arrow")
+        this.leftArrow = this.add.image(600, 1050, "left_arrow")         
             .setInteractive({ useHandCursor: true })
-            .setScale(0.6)
+            .setScale(0.4)
             .setDepth(10)
             .setOrigin(0.5);
 
-        this.rightArrow = this.add.image(600, 1100, "right_arrow")
+        this.rightArrow = this.add.image(120, 1050, "right_arrow")
             .setInteractive({ useHandCursor: true })
-            .setScale(0.6)
+            .setScale(0.4)
             .setDepth(10)
             .setOrigin(0.5);
 
@@ -71,7 +71,7 @@ class ShopScreen extends Phaser.Scene {
         });
     }
 
-    createItemDisplay(food) {
+    createItemDisplay(food) { 
         this.clearDisplay();
 
         const centerX = 360;
@@ -79,8 +79,8 @@ class ShopScreen extends Phaser.Scene {
 
         if (!this.data.inventory[food.key]) this.data.inventory[food.key] = 0;
 
-        const icon = this.add.image(centerX, centerY - 100, food.key)
-            .setScale(0.8)
+        const icon = this.add.image(centerX, centerY - 150, food.key)
+            .setScale(0.6)
             .setOrigin(0.5);
 
         const name = this.add.text(centerX, centerY + 60, food.label, {
