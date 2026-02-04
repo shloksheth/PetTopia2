@@ -1,0 +1,25 @@
+class UIScene extends Phaser.Scene {
+    constructor() {
+        super({ key: "UIScene", active: true }); // auto-starts this scene 
+    }
+
+    create() {
+        this.data = GameData.load();
+        this.topBar = new TopBar(this, this.data);
+
+        // Listen for custom stat updates (used by HomeScreen)
+        this.registry.events.on("update-stats", (newData) => {
+            this.topBar.updateCounters(newData);
+        });
+
+        // 🔥 Listen for registry changes (used by ShopScreen)
+        this.registry.events.on("changedata", (parent, key, value) => {
+            if (key === "coins") {
+                this.topBar.updateCoins(value);
+            }
+        });
+
+        this.scene.launch("HomeScreen");
+        this.scene.bringToTop("UIScene");
+    }
+}

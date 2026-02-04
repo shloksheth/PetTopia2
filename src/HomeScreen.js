@@ -10,29 +10,45 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("gem_icon", "assets/icons/gems.png");
 
         this.load.image("pizza", "assets/icons/pizza.png");
+<<<<<<< HEAD
         this.load.image('meat', 'assets/ui/meat_without_bg_2.png');
         this.load.image("apple", "assets/ui/apple_without_bg.png");
         this.load.image('fish', "assets/ui/fish_without_bg.png");
+=======
+        this.load.image("meat", "assets/ui/meat_without_bg_2.png");
+        this.load.image("apple", "assets/ui/apple_without_bg.png");
+        this.load.image("happiness_gradient", "assets/icons/gradient.png");
+        this.load.image("smile1", "assets/icons/smile1.png");
+        this.load.image("smile2", "assets/icons/smile2.png");
+        this.load.image("smile3", "assets/icons/smile3.png");
+        this.load.image("smile4", "assets/icons/smile4.png");
+        this.load.image("smile5", "assets/icons/smile5.png");
+
+
+>>>>>>> 0f1631a29bd925b602420cf5c383e22f40fa870c
 
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
         }
     }
     create() {
-        this.data = GameData.load();
-        this.closeFoodPopup();
-
         const centerX = this.scale.width / 2;
         const margin = 30;
 
-        this.add.image(0, 0, "home_bg").setOrigin(0);
-        this.add.rectangle(0, 0, 720, 160, 0x000000, 0.35).setOrigin(0);
+        this.data = GameData.load();
 
-        this.add.image(margin, margin + 10, "coin_icon").setOrigin(0).setDisplaySize(48, 48);
-        this.coinText = this.add.text(margin + 60, margin + 10, this.data.coins, { fontSize: "36px", color: "#ffffff" });
+        // Ensure all stats are numbers
+        this.data.hunger = Number(this.data.hunger) || 100;
+        this.data.energy = Number(this.data.energy) || 100;
+        this.data.happiness = Number(this.data.happiness) || 100;
 
-        this.add.image(margin + 180, margin + 10, "gem_icon").setOrigin(0).setDisplaySize(48, 48);
-        this.gemText = this.add.text(margin + 240, margin + 10, this.data.gems, { fontSize: "36px", color: "#ffffff" });
+        this.closeFoodPopup();
+
+        const bg = this.add.image(0, 0, "home_bg").setOrigin(0);
+        bg.setDisplaySize(this.scale.width, this.scale.height);
+
+        this.data.coins += 5;
+        this.registry.events.emit("update-stats", this.data);
 
         this.nameText = this.add.text(centerX, 200, this.data.name, {
             fontSize: "48px",
@@ -41,16 +57,70 @@ class HomeScreen extends Phaser.Scene {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
         this.nameText.on("pointerdown", () => this.showRenameUI());
+        // Rename button (🖋️ icon with black square background)
+        this.renameBtn = this.add.text(centerX + 140, 200, "🖋️", {
+            fontSize: "28px",
+            backgroundColor: "#000000",
+            color: "#ffffff",
+            padding: { x: 10, y: 6 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-        this.add.text(centerX, 270, "Pet", { fontSize: "36px", color: "#ffffff" }).setOrigin(0.5);
+        this.renameBtn.on("pointerdown", () => this.showRenameUI());
+
+
+       
+
 
         this.bars = {
-            hunger: this.createBar("Hunger", centerX, 330, 0x00cc66, this.data.hunger),
-            happiness: this.createBar("Happiness", centerX, 390, 0xff3366, 80),
-            energy: this.createBar("Energy", centerX, 450, 0xffcc00, this.data.energy)
+            hunger: this.createBar("Hunger", centerX, 340, 0x00cc66, this.data.hunger),
+            energy: this.createBar("Energy", centerX, 480, 0xffcc00, this.data.energy)
         };
 
-        this.pet = this.add.sprite(centerX, 960, "idle1").setScale(1.2);
+
+        this.happinessBarX = 60;
+        this.happinessBarY = 640;
+        this.happinessBarWidth = 40;
+        this.happinessBarHeight = 400;
+
+        this.happinessBar = this.add.image(this.happinessBarX, this.happinessBarY, "happiness_gradient")
+            .setOrigin(0.5)
+            .setDisplaySize(this.happinessBarHeight, this.happinessBarWidth)
+            .setAngle(90) // rotates horizontal gradient to vertical
+            .setDepth(5);
+
+
+
+        this.happinessOverlay = this.add.rectangle(
+            this.happinessBarX,
+            this.happinessBarY,
+            this.happinessBarWidth,
+            this.happinessBarHeight,
+            0x000000,
+            0.4 // Adjust opacity here (0 = transparent, 1 = solid)
+        ).setOrigin(0.5).setDepth(6);
+
+
+        this.happinessFace = this.add.image(
+            this.happinessBarX,
+            this.getHappinessY(this.data.happiness),
+            "smile1"
+        ).setOrigin(0.5).setDisplaySize(70, 65).setDepth(10);
+        this.happinessText = this.add.text(
+            this.happinessBarX,
+            this.happinessBarY + this.happinessBarHeight / 2 + 30,
+            `${this.data.happiness}/100`,
+            {
+                fontSize: "28px",
+                fontFamily: "Arial Black",
+                color: "#ffffff",
+                stroke: "#000000",
+                strokeThickness: 3
+            }
+        ).setOrigin(0.5).setDepth(10);
+
+
+
+        this.pet = this.add.sprite(centerX, 800, "idle1").setScale(1.0);
         this.anims.create({
             key: "dog_idle",
             frames: [...Array(8)].map((_, i) => ({ key: "idle" + (i + 1) })),
@@ -61,23 +131,36 @@ class HomeScreen extends Phaser.Scene {
 
         const buttonY = 1180;
 
-        const foodBtn = this.add.image(centerX - 150, buttonY, "button")
-            .setInteractive({ useHandCursor: true })
-            .setScale(1.2)
-            .setOrigin(0.5);
-        this.add.text(centerX - 190, buttonY - 30, "Food", {
-            fontSize: "40px",
+        // Food Button with 🍖 emoji
+        const foodBtn = this.add.container(centerX - 150, buttonY);
+        const foodIcon = this.add.text(0, 0, "🍖", {
+            fontSize: "48px"
+        }).setOrigin(0.5);
+        const foodLabel = this.add.text(0, 50, "Food", {
+            fontSize: "24px",
+            fontStyle: "bold",
             color: "#ffffff"
+        }).setOrigin(0.5);
+        foodBtn.add([foodIcon, foodLabel]);
+        foodBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
+        foodBtn.on("pointerdown", () => {
+            if (this.foodPopup) return;
+            this.time.delayedCall(100, () => this.showFoodPopup());
         });
 
-        const shopBtn = this.add.image(centerX + 150, buttonY, "button")
-            .setInteractive({ useHandCursor: true })
-            .setScale(1.2)
-            .setOrigin(0.5);
-        this.add.text(centerX + 110, buttonY - 30, "Shop", {
-            fontSize: "40px",
+        // Shop Button with 🏪 emoji
+        const shopBtn = this.add.container(centerX + 150, buttonY);
+        const shopIcon = this.add.text(0, 0, "🏪", {
+            fontSize: "48px"
+        }).setOrigin(0.5);
+        const shopLabel = this.add.text(0, 50, "Shop", {
+            fontSize: "24px",
+            fontStyle: "bold",
             color: "#ffffff"
-        });
+        }).setOrigin(0.5);
+        shopBtn.add([shopIcon, shopLabel]);
+        shopBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
+        shopBtn.on("pointerdown", () => this.scene.start("ShopScreen"));
 
         foodBtn.on("pointerdown", () => {
             if (this.foodPopup) return;
@@ -93,7 +176,7 @@ class HomeScreen extends Phaser.Scene {
                 this.setBarValue("hunger", this.data.hunger - 2);
                 this.setBarValue("energy", this.data.energy - 1);
 
-                if (this.data.hunger < 70 || this.data.energy < 60) {
+                if (this.data.hunger < 80 || this.data.energy < 90) {
                     this.setBarValue("happiness", this.data.happiness - 1);
                 }
             }
@@ -102,25 +185,52 @@ class HomeScreen extends Phaser.Scene {
 
     }
     createBar(label, x, y, color, percent) {
-        const barWidth = 300;
-        const barHeight = 24;
+        const barWidth = 320;
+        const barHeight = 28;
+        const radius = 14;
 
-        this.add.text(x - barWidth / 2, y - 30, label, {
-            fontSize: "28px",
-            color: "#ffffff"
-        });
-
-        const bg = this.add.rectangle(x, y, barWidth, barHeight, 0x444444).setOrigin(0.5);
-        const fill = this.add.rectangle(x - barWidth / 2, y, (barWidth * percent) / 100, barHeight, color)
-            .setOrigin(0, 0.5);
-
-        const valueText = this.add.text(x + barWidth / 2 + 10, y, `${Math.round(percent)}/100`, {
-            fontSize: "24px",
-            color: "#ffffff"
+        // Label
+        this.add.text(x - barWidth / 2, y - 36, label, {
+            fontSize: "26px",
+            fontFamily: "Arial Black",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 3
         }).setOrigin(0, 0.5);
 
-        return { bg, fill, valueText, color, width: barWidth };
+        // Background
+        const bg = this.add.graphics().setDepth(1);
+        bg.fillStyle(0x333333, 1);
+        bg.fillRoundedRect(x - barWidth / 2, y - barHeight / 2, barWidth, barHeight, radius);
+
+        // Fill
+        const fill = this.add.graphics().setDepth(2);
+        fill.fillStyle(color, 1);
+        fill.fillRoundedRect(x - barWidth / 2, y - barHeight / 2, (barWidth * percent) / 100, barHeight, radius);
+
+        // Value text
+        const valueText = this.add.text(x + barWidth / 2 + 12, y, `${Math.round(percent)}/100`, {
+            fontSize: "24px",
+            fontFamily: "Arial Black",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 2
+        }).setOrigin(0, 0.5).setDepth(3);
+
+        return {
+            bg,
+            fill,
+            valueText,
+            color,
+            width: barWidth,
+            height: barHeight,
+            x,
+            bgY: y
+        };
     }
+
+
+
 
 
     setBarValue(type, value) {
@@ -128,45 +238,93 @@ class HomeScreen extends Phaser.Scene {
         if (!bar) return;
 
         const clamped = Phaser.Math.Clamp(value, 0, 100);
-        bar.fill.width = (bar.width * clamped) / 100;
+        bar.fill.clear();
+        bar.fill.fillStyle(bar.color, 1);
+        bar.fill.fillRoundedRect(
+            bar.x - bar.width / 2,
+            bar.bgY - bar.height / 2,
+            (bar.width * clamped) / 100,
+            bar.height,
+            14
+        );
+
         bar.valueText.setText(`${Math.round(clamped)}/100`);
         this.data[type] = clamped;
         GameData.save(this.data);
+
+        if (type === "happiness") {
+            const newY = this.getHappinessY(clamped);
+
+            // Move the smiley
+            this.tweens.add({
+                targets: this.happinessFace,
+                y: newY,
+                duration: 300,
+                ease: "Sine.easeInOut"
+            });
+
+            // Change smiley image
+            const index = Math.min(4, Math.floor((100 - clamped) / 20));
+            this.happinessFace.setTexture(`smile${index + 1}`);
+
+            // Resize gray overlay above the smiley
+            const overlayTop = this.happinessBarY - this.happinessBarHeight / 2;
+            const overlayBottom = newY - 24; // 24 = half smiley height
+            const overlayHeight = overlayBottom - overlayTop;
+
+            this.happinessOverlay.setDisplaySize(this.happinessBarWidth, overlayHeight);
+            this.happinessOverlay.setPosition(this.happinessBarX, overlayTop + overlayHeight / 2);
+            this.happinessText.setText(`${Math.round(clamped)}/100`);
+
+        }
     }
+    getHappinessY(happiness) {
+        const top = this.happinessBarY - this.happinessBarHeight / 2;
+        const bottom = this.happinessBarY + this.happinessBarHeight / 2;
+        return Phaser.Math.Linear(bottom, top, happiness / 100);
+    }
+
+
+
+
+
+
 
 
     showRenameUI() {
         if (this.renameInput) return;
 
+        // Create input box
         this.renameInput = document.createElement("input");
         this.renameInput.type = "text";
-        this.renameInput.placeholder = "Enter new name...";
+        this.renameInput.placeholder = "Pet name";
         this.renameInput.style.position = "absolute";
-        this.renameInput.style.top = "250px";
+        this.renameInput.style.top = "260px";
         this.renameInput.style.left = "50%";
         this.renameInput.style.transform = "translateX(-50%)";
-        this.renameInput.style.fontSize = "28px";
-        this.renameInput.style.padding = "8px";
+        this.renameInput.style.fontSize = "24px";
+        this.renameInput.style.padding = "6px 12px";
+        this.renameInput.style.border = "2px solid #000";
+        this.renameInput.style.borderRadius = "6px";
+        this.renameInput.style.zIndex = 1000;
         document.body.appendChild(this.renameInput);
+        this.renameInput.focus();
 
-        const submitBtn = this.add.text(360, 300, "Submit", {
-            fontSize: "40px",
-            color: "#00ff00"
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-        submitBtn.on("pointerdown", () => {
-            const newName = this.renameInput.value.trim();
-            if (newName.length > 0) {
-                this.data.name = newName;
-                GameData.save(this.data);
-                this.nameText.setText(newName);
+        // Listen for Enter key
+        this.renameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                const newName = this.renameInput.value.trim();
+                if (newName.length > 0) {
+                    this.data.name = newName;
+                    GameData.save(this.data);
+                    this.nameText.setText(newName);
+                }
+                this.renameInput.remove();
+                this.renameInput = null;
             }
-
-            this.renameInput.remove();
-            this.renameInput = null;
-            submitBtn.destroy();
         });
     }
+
     showFoodPopup() {
         if (this.foodPopup) return;
 
@@ -174,11 +332,19 @@ class HomeScreen extends Phaser.Scene {
         const border = this.add.rectangle(360, 640, 520, 420).setStrokeStyle(4, 0xffffff).setOrigin(0.5);
 
         const foods = [
+<<<<<<< HEAD
             {key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger"},
             {key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger"},
             {key: "apple", label: "Apple", restore: 5, desc: "Restores 5 hunger"},
             {key: "fish", label: "Fish", restore: 10, desc: "Restores 10 hunger"}
+=======
+            { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger" },
+            { key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger" },
+            { key: "apple", label: "Apple", restore: 10, desc: "Restores 10 hunger" },
+            { key: "fish", label: "Fish", restore: 15, desc: "Restores 15 hunger" }
+>>>>>>> 0f1631a29bd925b602420cf5c383e22f40fa870c
         ];
+
 
         const buttons = [];
         const visibleFoods = foods.filter(f => this.data.inventory[f.key] > 0);
@@ -214,7 +380,7 @@ class HomeScreen extends Phaser.Scene {
                 const x = 200 + i * 160;
                 const y = 640;
 
-                const icon = this.add.image(x, y, food.key).setScale(0.6).setInteractive({ useHandCursor: true });
+                const icon = this.add.image(x, y, food.key).setScale(0.4).setInteractive({ useHandCursor: true });
                 const qty = this.add.text(x, y + 70, `x${this.data.inventory[food.key]}`, {
                     fontSize: "24px",
                     color: "#ffff66"
@@ -239,7 +405,6 @@ class HomeScreen extends Phaser.Scene {
                     this.data.inventory[food.key]--;
                     this.setBarValue("hunger", this.data.hunger + food.restore);
                     GameData.save(this.data);
-                    this.coinText.setText(this.data.coins);
                     this.closeFoodPopup();
                 });
 
