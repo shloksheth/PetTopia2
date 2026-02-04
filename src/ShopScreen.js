@@ -16,7 +16,7 @@ class ShopScreen extends Phaser.Scene {
     }
 
     create() {
-        this.data = GameData.load();
+        GameData.load();
         this.registry.set("coins", this.data.coins);
         if (!this.data.inventory) this.data.inventory = {};
 
@@ -150,3 +150,5 @@ class ShopScreen extends Phaser.Scene {
         this.displayedElements = [];
     }
 }
+window.ShopScreen = ShopScreen;
+
