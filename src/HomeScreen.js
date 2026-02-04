@@ -19,8 +19,6 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("smile4", "assets/icons/smile4.png");
         this.load.image("smile5", "assets/icons/smile5.png");
 
-
-
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
         }
@@ -158,6 +156,19 @@ class HomeScreen extends Phaser.Scene {
         shopBtn.add([shopIcon, shopLabel]);
         shopBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
         shopBtn.on("pointerdown", () => this.scene.start("ShopScreen"));
+
+        const vetBtn = this.add.container(centerX, buttonY); 
+        const vetIcon = this.add.text(0, 0, "🏥", {
+            fontSize: "48px"
+        }).setOrigin(0.5);
+        const vetLabel = this.add.text(0, 50, "Vet", {
+            fontSize: "24px",
+            fontStyle: "bold",
+            color: "#ffffff"
+        }).setOrigin(0.5);
+        vetBtn.add([vetIcon, vetLabel]);
+        vetBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
+        vetBtn.on("pointerdown", () => this.scene.start("VetScreen"));
 
         // Paw Print Button (next to Shop)
         const pawBtn = this.add.container(centerX + 300, buttonY); // adjust position as needed
