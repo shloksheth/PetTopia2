@@ -10,17 +10,15 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("gem_icon", "assets/icons/gems.png");
 
         this.load.image("pizza", "assets/icons/pizza.png");
-
-        this.load.image('meat', 'assets/ui/meat_without_bg_2.png');
+        this.load.image("meat", "assets/ui/meat_without_bg_2.png");
         this.load.image("apple", "assets/ui/apple_without_bg.png");
-        this.load.image('fish', "assets/ui/fish_without_bg.png");
-
         this.load.image("happiness_gradient", "assets/icons/gradient.png");
         this.load.image("smile1", "assets/icons/smile1.png");
         this.load.image("smile2", "assets/icons/smile2.png");
         this.load.image("smile3", "assets/icons/smile3.png");
         this.load.image("smile4", "assets/icons/smile4.png");
         this.load.image("smile5", "assets/icons/smile5.png");
+
 
 
         for (let i = 1; i <= 8; i++) {
@@ -63,9 +61,13 @@ class HomeScreen extends Phaser.Scene {
 
         this.renameBtn.on("pointerdown", () => this.showRenameUI());
 
+
+       
+
+
         this.bars = {
             hunger: this.createBar("Hunger", centerX, 340, 0x00cc66, this.data.hunger),
-            energy: this.createBar("Energy", centerX, 480, 0xffcc00, this.data.energy)
+            energy: this.createBar("Health", centerX, 480, 0xffcc00, this.data.energy)
         };
 
 
@@ -275,6 +277,13 @@ class HomeScreen extends Phaser.Scene {
         const bottom = this.happinessBarY + this.happinessBarHeight / 2;
         return Phaser.Math.Linear(bottom, top, happiness / 100);
     }
+
+
+
+
+
+
+
 
     showRenameUI() {
         if (this.renameInput) return;
