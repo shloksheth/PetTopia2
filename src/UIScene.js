@@ -2,6 +2,11 @@ class UIScene extends Phaser.Scene {
     constructor() {
         super({ key: "UIScene", active: true }); // auto-starts this scene 
     }
+    preload() {
+        this.load.image("coin_icon", "assets/icons/gold coin.png");
+        this.load.image("gem_icon", "assets/icons/gems.png");
+        this.load.image("button", "assets/icons/button.png"); // if used in TopBar
+    }
 
     create() {
         this.data = GameData.load();

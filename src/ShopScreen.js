@@ -5,8 +5,8 @@ class ShopScreen extends Phaser.Scene {
 
     preload() {
         this.load.image("button", "assets/icons/button.png");
-        this.load.image("left_arrow", "assets/icons/left_arrow.png");
-        this.load.image("right_arrow", "assets/icons/right_arrow.png");
+        this.load.image("left_arrow", "assets/icons/leftarrow.png");
+        this.load.image("right_arrow", "assets/icons/rightarrow.png");
 
         this.load.image("pizza", "assets/icons/pizza.png");
         this.load.image("meat", "assets/ui/meat_without_bg_2.png");
