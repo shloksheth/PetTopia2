@@ -13,9 +13,15 @@ class VetScreen extends Phaser.Scene {
     }
 
     create() {
-        this.add.image(360, 640, 'vet_bg').setOrigin(0.5);
+        const topBarHeight = 77;
 
-        this.pet = this.add.sprite(330, 615, "idle1").setScale(1.0);
+        // Background image resized and offset to avoid top bar
+        const bg = this.add.image(0, topBarHeight, 'vet_bg')
+            .setOrigin(0, 0);
+        bg.setDisplaySize(this.scale.width, this.scale.height - topBarHeight);
+
+        // Pet sprite
+        this.pet = this.add.sprite(330, 660, "idle1").setScale(0.7);
 
         if (!this.anims.exists("dog_idle")) {
             this.anims.create({
@@ -27,6 +33,7 @@ class VetScreen extends Phaser.Scene {
         }
         this.pet.play("dog_idle");
 
+        // Back button
         const backBtn = this.add.image(360, 1100, "button")
             .setInteractive({ useHandCursor: true })
             .setOrigin(0.5);
