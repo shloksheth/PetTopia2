@@ -6,7 +6,7 @@ const GameData = {
     coins: 100,
     gems: 10,
     inventory: {
-        pizza: 0,
+        pizza: 1,
         meat: 0,
         apple: 0,
         fish: 0
@@ -27,7 +27,7 @@ const GameData = {
                 fish: 0
             };
         } else {
-            // First-time setup with default pet
+            // First-time setup
             this.pets = [{
                 name: "Buddy",
                 type: "dog",
@@ -47,6 +47,7 @@ const GameData = {
             this.save();
         }
     },
+
 
     save() {
         localStorage.setItem("petGameData", JSON.stringify({
