@@ -9,8 +9,13 @@ class UIScene extends Phaser.Scene {
     }
 
     create() {
-        this.data = GameData.load();
-        this.topBar = new TopBar(this, this.data);
+        GameData.load();
+        const pet = GameData.getActivePet(); // Make sure GameData is loaded first
+        this.topBar = new TopBar(this, {
+            coins: pet.coins || 0,
+            gems: pet.gems || 0
+        });
+
 
         // Listen for custom stat updates (used by HomeScreen)
         this.registry.events.on("update-stats", (newData) => {

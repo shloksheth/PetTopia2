@@ -1,41 +1,105 @@
-class GameData {
-    static defaultData() {
-        return {
-            name: "Pet",
-            coins: 100,
-            gems: 5,
-            hunger: 100,
-            energy: 100,
-            inventory: {
+// GameData.js
+
+const GameData = {
+    pets: [],
+    activePetIndex: 0,
+    coins: 100,
+    gems: 10,
+    inventory: {
+        pizza: 0,
+        meat: 0,
+        apple: 0,
+        fish: 0
+    },
+
+    load() {
+        const saved = localStorage.getItem("petGameData");
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            this.pets = parsed.pets || [];
+            this.activePetIndex = parsed.activePetIndex ?? 0;
+            this.coins = parsed.coins ?? 100;
+            this.gems = parsed.gems ?? 10;
+            this.inventory = parsed.inventory || {
                 pizza: 0,
                 meat: 0,
-                apple: 0
-            }
-        };
-    }
-
-    static load() {
-        const raw = localStorage.getItem("pettopia_save");
-        if (raw) {
-            try {
-                return JSON.parse(raw);
-            } catch (e) {
-                console.warn("Corrupted save data. Resetting...");
-                return this.defaultData();
-            }
+                apple: 0,
+                fish: 0
+            };
+        } else {
+            // First-time setup with default pet
+            this.pets = [{
+                name: "Buddy",
+                type: "dog",
+                hunger: 100,
+                energy: 100,
+                happiness: 100
+            }];
+            this.activePetIndex = 0;
+            this.coins = 100;
+            this.gems = 10;
+            this.inventory = {
+                pizza: 0,
+                meat: 0,
+                apple: 0,
+                fish: 0
+            };
+            this.save();
         }
-        return this.defaultData();
-    }
+    },
 
-    static save(data) {
-        localStorage.setItem("pettopia_save", JSON.stringify(data));
-    }
+    save() {
+        localStorage.setItem("petGameData", JSON.stringify({
+            pets: this.pets,
+            activePetIndex: this.activePetIndex,
+            coins: this.coins,
+            gems: this.gems,
+            inventory: this.inventory
+        }));
+    },
 
-    static reset() {
-        const defaults = this.defaultData();
-        this.save(defaults);
-        return defaults;
-    }
-}
+    getActivePet() {
+        return this.pets[this.activePetIndex];
+    },
 
+    switchToPet(index) {
+        if (index >= 0 && index < this.pets.length) {
+            this.activePetIndex = index;
+            this.save();
+        }
+    },
+
+    addPet(name, type) {
+        if (this.pets.length >= 2) return false;
+        if (this.pets.some(p => p.name.toLowerCase() === name.toLowerCase())) return false;
+
+        this.pets.push({
+            name,
+            type,
+            hunger: 100,
+            energy: 100,
+            happiness: 100
+        });
+        this.activePetIndex = this.pets.length - 1;
+        this.save();
+        return true;
+    },
+
+    removePet(index) {
+        if (index < 0 || index >= this.pets.length) return false;
+        this.pets.splice(index, 1);
+        if (this.activePetIndex >= this.pets.length) {
+            this.activePetIndex = this.pets.length - 1;
+        }
+        this.save();
+        return true;
+    },
+
+    reset() {
+        localStorage.removeItem("petGameData");
+        this.load();
+    }
+};
+
+// Make GameData globally accessible
 window.GameData = GameData;

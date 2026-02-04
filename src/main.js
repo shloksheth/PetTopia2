@@ -9,8 +9,12 @@ window.onload = function () {
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH
-        }
+        },
+        dom: {
+            createContainer: true
+        },
     };
 
-    new Phaser.Game(config); // No need to manually launch scenes here
+    const game = new Phaser.Game(config);
 };
+
