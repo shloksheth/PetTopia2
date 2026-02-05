@@ -6,7 +6,9 @@ class UIScene extends Phaser.Scene {
         this.load.image("coin_icon", "assets/icons/gold coin.png");
         this.load.image("gem_icon", "assets/icons/gems.png");
         this.load.image("button", "assets/icons/button.png"); // if used in TopBar
-        this.load.image("orange_box", "assets/icons/orange square.png");
+        this.load.image("orange_box", "assets/icons/orangebox.png");
+        this.load.image("topbar_bg", "assets/icons/topbar_gradient.png"); // or whatever path you saved it as
+
 
     }
 

@@ -655,8 +655,8 @@ class HomeScreen extends Phaser.Scene {
     showFoodPopup() {
         if (this.foodPopup) return;
 
-        const popupBg = this.add.rectangle(360, 640, 520, 420, 0x000000, 0.85).setOrigin(0.5);
-        const border = this.add.rectangle(360, 640, 520, 420).setStrokeStyle(4, 0xffffff).setOrigin(0.5);
+        const popupBg = this.add.rectangle(390, 800, 520, 420, 0x000000, 0.85).setOrigin(0.5);
+        const border = this.add.rectangle(390, 800, 520, 420).setStrokeStyle(4, 0xffffff).setOrigin(0.5);
 
         const foods = [
             { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger" },
@@ -678,12 +678,12 @@ class HomeScreen extends Phaser.Scene {
         }).setDepth(1000).setVisible(false);
 
         if (visibleFoods.length === 0) {
-            const noFoodText = this.add.text(360, 620, "No food left!", {
+            const noFoodText = this.add.text(390, 780, "No food left!", {
                 fontSize: "32px",
                 color: "#ffffff"
             }).setOrigin(0.5);
 
-            const shopBtn = this.add.text(360, 680, "Go to Shop", {
+            const shopBtn = this.add.text(390, 840, "Go to Shop", {
                 fontSize: "32px",
                 color: "#00ffcc",
                 backgroundColor: "#222",

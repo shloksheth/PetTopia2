@@ -11,10 +11,15 @@ class TopBar {
 
     createBar() {
         const { width } = this.scene.scale;
-        this.scene.add.rectangle(0, 0, width, 120, 0xffa500)
-            .setOrigin(0)
-            .setDepth(10);
+
+        this.scene.add.image(width / 2, 60, "topbar_bg")
+            .setOrigin(0.5)
+            .setDisplaySize(width + 36000, 350)
+            .setDepth(9); // Behind all icons and text
+        
+            
     }
+    
 
     createCounters() {
         const { scene, data } = this;
@@ -72,6 +77,7 @@ class TopBar {
         }).setOrigin(0.5).setDepth(12).setInteractive({ useHandCursor: true });
 
         this.gear.on("pointerdown", () => this.togglePopup());
+        
     }
 
 
@@ -172,15 +178,15 @@ class TopBar {
     }
     showSettingsMenu() {
         const { scene } = this;
-        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6)
+        const overlay = scene.add.rectangle(360, 660, 720, 1280, 0x000000, 0.6)
             .setDepth(50)
             .setInteractive();
 
-        const panel = scene.add.rectangle(360, 640, 600, 720, 0x222222, 0.95)
+        const panel = scene.add.rectangle(360, 520, 600, 720, 0x222222, 0.95)
             .setStrokeStyle(4, 0xffffff)
             .setDepth(51);
 
-        const title = scene.add.text(360, 200, "Settings", {
+        const title = scene.add.text(360, 210, "Settings", {
             fontSize: "48px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -189,7 +195,7 @@ class TopBar {
         }).setOrigin(0.5).setDepth(52);
 
         const elements = [];
-        let y = 280;
+        let y = 310;
         const spacing = 70;
 
         // Music
