@@ -11,6 +11,7 @@ class HomeScreen extends Phaser.Scene {
 
         this.load.image("pizza", "assets/icons/pizza.png");
         this.load.image("meat", "assets/ui/meat_without_bg_2.png");
+        this.load.image("fish", "assets/ui/fish_without_bg.png")
         this.load.image("apple", "assets/ui/apple_without_bg.png");
         this.load.image("happiness_gradient", "assets/icons/gradient.png");
         this.load.image("smile1", "assets/icons/smile1.png");
@@ -21,6 +22,9 @@ class HomeScreen extends Phaser.Scene {
 
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
+        }
+        for (let i = 1; i <= 8; i++){
+            this.load.image('idle_cat' + i, `assets/sprites/pets/idle cat animation/idle ${i}.png`);
         }
     }
     create() {
@@ -116,14 +120,20 @@ class HomeScreen extends Phaser.Scene {
 
 
 
-        this.petSprite = this.add.sprite(centerX, 800, "idle1").setScale(1.0);
         this.anims.create({
             key: "dog_idle",
             frames: [...Array(8)].map((_, i) => ({ key: "idle" + (i + 1) })),
             frameRate: 6,
             repeat: -1
         });
-        this.petSprite.play("dog_idle");
+
+        this.anims.create({
+            key: "cat_idle",
+            frames: [...Array(8)].map((_, i) => ({ key: "idle_cat" + (i + 1) })),
+            frameRate: 6,
+            repeat: -1 
+        });
+        this.loadPet();
 
 
         const buttonY = 1180;
@@ -369,113 +379,53 @@ class HomeScreen extends Phaser.Scene {
 
     showAddPetDialog() {
         const scene = this;
-        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6)
-            .setDepth(110)
-            .setInteractive();
-
-        const panel = scene.add.rectangle(360, 640, 580, 500, 0x222222, 0.95)
-            .setStrokeStyle(4, 0xffffff)
-            .setDepth(111);
-
-        const title = scene.add.text(360, 400, "Add a New Pet", {
-            fontSize: "42px",
-            fontFamily: "Arial Black",
-            color: "#ffffff"
-        }).setOrigin(0.5).setDepth(112);
-
-        const nameLabel = scene.add.text(160, 470, "Pet Name:", {
-            fontSize: "30px",
-            fontFamily: "Arial Black",
-            color: "#ffffff"
-        }).setOrigin(0, 0.5).setDepth(112);
+        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6).setDepth(110).setInteractive();
+        const panel = scene.add.rectangle(360, 640, 580, 500, 0x222222, 0.95).setStrokeStyle(4, 0xffffff).setDepth(111);
+        
+        const title = scene.add.text(360, 400, "Add a New Pet", { fontSize: "42px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0.5).setDepth(112);
+        const nameLabel = scene.add.text(160, 470, "Pet Name:", { fontSize: "30px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0, 0.5).setDepth(112);
 
         const nameInput = scene.add.dom(460, 470).createFromHTML(`
-        <input type="text" id="petNameInput" name="petNameInput" placeholder="Enter name" style="
-            font-size: 24px;
-            padding: 8px;
-            width: 200px;
-            border-radius: 6px;
-            border: none;
-        ">
-    `).setDepth(112);
+            <input type="text" id="petNameInput" name="petNameInput" placeholder="Enter name" style="font-size: 24px; padding: 8px; width: 200px; border-radius: 6px; border: none;">
+        `).setDepth(112);
 
-        const petTypeLabel = scene.add.text(160, 540, "Choose Type:", {
-            fontSize: "30px",
-            fontFamily: "Arial Black",
-            color: "#ffffff"
-        }).setOrigin(0, 0.5).setDepth(112);
+        const petTypeLabel = scene.add.text(160, 540, "Choose Type:", { fontSize: "30px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0, 0.5).setDepth(112);
 
-        const dogBtn = scene.add.text(300, 600, "Dog", {
-            fontSize: "28px",
-            fontFamily: "Arial Black",
-            color: "#ffffff",
-            backgroundColor: "#444",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
+        const dogBtn = scene.add.text(300, 600, "Dog", { fontSize: "28px", fontFamily: "Arial Black", color: "#ffffff", backgroundColor: "#444", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
+        const catBtn = scene.add.text(420, 600, "Cat", { fontSize: "28px", fontFamily: "Arial Black", color: "#ffffff", backgroundColor: "#444", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
 
-        const catBtn = scene.add.text(420, 600, "Cat", {
-            fontSize: "28px",
-            fontFamily: "Arial Black",
-            color: "#ffffff",
-            backgroundColor: "#444",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
+        const confirmBtn = scene.add.text(360, 700, "Add Pet", { fontSize: "30px", fontFamily: "Arial Black", color: "#00ff88", backgroundColor: "#000", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
+        const cancelBtn = scene.add.text(360, 770, "Cancel", { fontSize: "28px", fontFamily: "Arial Black", color: "#ffffff", backgroundColor: "#444", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
 
-        let selectedType = null;
-
-        const highlightSelection = (type) => {
-            selectedType = type;
-            dogBtn.setBackgroundColor(type === "dog" ? "#00ccff" : "#444");
-            catBtn.setBackgroundColor(type === "cat" ? "#00ccff" : "#444");
+        // Helper to clean up all UI elements at once
+        const closeUI = () => {
+            [overlay, panel, title, nameLabel, nameInput, petTypeLabel, dogBtn, catBtn, confirmBtn, cancelBtn].forEach(el => el.destroy());
         };
 
-        dogBtn.on("pointerdown", () => highlightSelection("dog"));
-        catBtn.on("pointerdown", () => highlightSelection("cat"));
-
-        const confirmBtn = scene.add.text(360, 700, "Add Pet", {
-            fontSize: "30px",
-            fontFamily: "Arial Black",
-            color: "#00ff88",
-            backgroundColor: "#000",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
+        let selectedType = null;
+        dogBtn.on("pointerdown", () => { selectedType = "dog"; dogBtn.setBackgroundColor("#00ccff"); catBtn.setBackgroundColor("#444"); });
+        catBtn.on("pointerdown", () => { selectedType = "cat"; catBtn.setBackgroundColor("#00ccff"); dogBtn.setBackgroundColor("#444"); });
 
         confirmBtn.on("pointerdown", () => {
-            const name = nameInput.getChildByName("petNameInput").value.trim();
-            if (!name) {
-                alert("Please enter a name.");
-                return;
-            }
-            if (!selectedType) {
-                alert("Please select a pet type.");
-                return;
-            }
-            if (GameData.pets.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-                alert("You already have a pet with that name.");
-                return;
-            }
+            const inputElement = nameInput.getChildByName("petNameInput");
+            const name = inputElement.value.trim();
+
+            if (!name) return alert("Please enter a name.");
+            if (!selectedType) return alert("Please select a pet type.");
+            if (GameData.pets.some(p => p.name.toLowerCase() === name.toLowerCase())) return alert("Name already taken!");
 
             const success = GameData.addPet(name, selectedType);
-            if (!success) {
+            if (success) {
+                GameData.activePetIndex = GameData.pets.length - 1;
+                GameData.save();
+                scene.loadPet(); // This will trigger the animation refresh
+                closeUI();
+            } else {
                 alert("You can only have up to 2 pets.");
-                return;
             }
-
-            scene.loadPet(); // Refresh pet sprite and stats
-            [overlay, panel, title, nameLabel, nameInput, petTypeLabel, dogBtn, catBtn, confirmBtn, cancelBtn].forEach(el => el.destroy());
         });
 
-        const cancelBtn = scene.add.text(360, 770, "Cancel", {
-            fontSize: "28px",
-            fontFamily: "Arial Black",
-            color: "#ffffff",
-            backgroundColor: "#444",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
-
-        cancelBtn.on("pointerdown", () => {
-            [overlay, panel, title, nameLabel, nameInput, petTypeLabel, dogBtn, catBtn, confirmBtn, cancelBtn].forEach(el => el.destroy());
-        });
+        cancelBtn.on("pointerdown", closeUI);
     }
     updateStatBars(pet) {
         this.setBarValue("hunger", pet.hunger);
@@ -553,18 +503,30 @@ class HomeScreen extends Phaser.Scene {
     }
 
     loadPet() {
-        GameData.save(); // Save current pet before switching
-        this.data = GameData.getActivePet(); // ← THIS is the missing line
+    GameData.save(); 
+    this.data = GameData.getActivePet(); 
 
-        if (this.petSprite) this.petSprite.destroy();
+    if (this.petSprite) this.petSprite.destroy();
 
-        const spriteKey = this.data.type === "dog" ? "idle1" : "idle1"; // update if needed
-        this.petSprite = this.add.sprite(360, 800, spriteKey).setScale(1.0);
-        this.petSprite.play("dog_idle");
+    const isCat = this.data.type === "cat";
+    const spriteKey = isCat ? "idle_cat1" : "idle1"; 
+    const animKey = isCat ? "cat_idle" : "dog_idle"; 
 
-        this.nameText.setText(this.data.name);
-        this.updateStatBars(this.data);
+    this.petSprite = this.add.sprite(360, 800, spriteKey);
+
+    if (isCat) {
+        this.petSprite.setScale(1.25);
+    } else {
+        this.petSprite.setScale(1.0);
     }
+
+    if (this.anims.exists(animKey)) {
+        this.petSprite.play(animKey);
+    }
+
+    this.nameText.setText(this.data.name);
+    this.updateStatBars(this.data);
+}
 
 
     setBarValue(type, value) {
