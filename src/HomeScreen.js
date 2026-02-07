@@ -4,7 +4,6 @@ class HomeScreen extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("home_bg", "assets/backgrounds/home_screen_bg.png");
         this.load.image("button", "assets/icons/button.png");
         this.load.image("coin_icon", "assets/icons/gold coin.png");
         this.load.image("gem_icon", "assets/icons/gems.png");
@@ -19,11 +18,14 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("smile3", "assets/icons/smile3.png");
         this.load.image("smile4", "assets/icons/smile4.png");
         this.load.image("smile5", "assets/icons/smile5.png");
+        this.load.image("HomeScreenDay", "assets/backgrounds/HomeScreenDay.png");
+        this.load.image("HomeScreenNight", "assets/backgrounds/HomeScreenNight.png");
+
 
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
         }
-        for (let i = 1; i <= 8; i++){
+        for (let i = 1; i <= 8; i++) {
             this.load.image('idle_cat' + i, `assets/sprites/pets/idle cat animation/idle ${i}.png`);
         }
     }
@@ -35,6 +37,25 @@ class HomeScreen extends Phaser.Scene {
         this.data = GameData.getActivePet();
 
 
+        // Set initial background key
+        this.currentBgKey = GameData.isNightTime() ? "HomeScreenNight" : "HomeScreenDay";
+
+        // Create background image first
+        this.background = this.add.image(-32.5, 0, this.currentBgKey).setOrigin(0);
+        this.background.setDisplaySize(this.scale.width + 75, this.scale.height);
+
+        // Now safe to call updateBackground
+        this.updateBackground();
+
+        // Listen for day/night changes
+        this.onDayNightChanged = this.updateBackground.bind(this);
+        this.game.events.on("daynight-changed", this.onDayNightChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.game.events.off("daynight-changed", this.onDayNightChanged);
+        });
+
+
         // Ensure all stats are numbers
         this.data.hunger = Number(this.data.hunger ?? 100);
         this.data.energy = Number(this.data.energy ?? 100);
@@ -42,10 +63,8 @@ class HomeScreen extends Phaser.Scene {
         GameData.save();
 
 
-        this.closeFoodPopup();
 
-        const bg = this.add.image(0, 0, "home_bg").setOrigin(0);
-        bg.setDisplaySize(this.scale.width, this.scale.height);
+        this.closeFoodPopup();
 
 
         this.registry.events.emit("update-stats", this.data);
@@ -72,8 +91,8 @@ class HomeScreen extends Phaser.Scene {
 
 
         this.bars = {
-            hunger: this.createBar("Hunger", centerX, 340, 0x00cc66, this.data.hunger),
-            energy: this.createBar("Health", centerX, 480, 0xffcc00, this.data.energy)
+            hunger: this.createBar("Hunger", centerX - 230, 1090, 0x00cc66, this.data.hunger),
+            energy: this.createBar("Health", centerX + 120, 1090, 0xffcc00, this.data.energy)
         };
 
 
@@ -131,7 +150,7 @@ class HomeScreen extends Phaser.Scene {
             key: "cat_idle",
             frames: [...Array(8)].map((_, i) => ({ key: "idle_cat" + (i + 1) })),
             frameRate: 6,
-            repeat: -1 
+            repeat: -1
         });
         this.loadPet();
 
@@ -231,22 +250,22 @@ class HomeScreen extends Phaser.Scene {
 
     }
     createBar(label, x, y, color, percent) {
-        const barWidth = 320;
+        const barWidth = 180;
         const barHeight = 28;
         const radius = 14;
 
         // Label
         this.add.text(x - barWidth / 2, y - 36, label, {
-            fontSize: "26px",
+            fontSize: "27px",
             fontFamily: "Arial Black",
             color: "#ffffff",
-            stroke: "#000000",
+            stroke: "#100000",
             strokeThickness: 3
-        }).setOrigin(0, 0.5);
+        }).setOrigin(-0.4, 0.5);
 
         // Background
         const bg = this.add.graphics().setDepth(1);
-        bg.fillStyle(0x333333, 1);
+        bg.fillStyle(0x733333, 1);
         bg.fillRoundedRect(x - barWidth / 2, y - barHeight / 2, barWidth, barHeight, radius);
 
         // Fill
@@ -256,10 +275,10 @@ class HomeScreen extends Phaser.Scene {
 
         // Value text
         const valueText = this.add.text(x + barWidth / 2 + 12, y, `${Math.round(percent)}/100`, {
-            fontSize: "24px",
+            fontSize: "28px",
             fontFamily: "Arial Black",
-            color: "#ffffff",
-            stroke: "#000000",
+            color: "#fff3ff",
+            stroke: "#800000",
             strokeThickness: 2
         }).setOrigin(0, 0.5).setDepth(3);
 
@@ -381,7 +400,7 @@ class HomeScreen extends Phaser.Scene {
         const scene = this;
         const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6).setDepth(110).setInteractive();
         const panel = scene.add.rectangle(360, 640, 580, 500, 0x222222, 0.95).setStrokeStyle(4, 0xffffff).setDepth(111);
-        
+
         const title = scene.add.text(360, 400, "Add a New Pet", { fontSize: "42px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0.5).setDepth(112);
         const nameLabel = scene.add.text(160, 470, "Pet Name:", { fontSize: "30px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0, 0.5).setDepth(112);
 
@@ -432,6 +451,7 @@ class HomeScreen extends Phaser.Scene {
         this.setBarValue("energy", pet.energy);
         this.setBarValue("happiness", pet.happiness);
     }
+
 
     showRemovePetDialog(index) {
         const scene = this;
@@ -503,30 +523,30 @@ class HomeScreen extends Phaser.Scene {
     }
 
     loadPet() {
-    GameData.save(); 
-    this.data = GameData.getActivePet(); 
+        GameData.save();
+        this.data = GameData.getActivePet();
 
-    if (this.petSprite) this.petSprite.destroy();
+        if (this.petSprite) this.petSprite.destroy();
 
-    const isCat = this.data.type === "cat";
-    const spriteKey = isCat ? "idle_cat1" : "idle1"; 
-    const animKey = isCat ? "cat_idle" : "dog_idle"; 
+        const isCat = this.data.type === "cat";
+        const spriteKey = isCat ? "idle_cat1" : "idle1";
+        const animKey = isCat ? "cat_idle" : "dog_idle";
 
-    this.petSprite = this.add.sprite(360, 800, spriteKey);
+        this.petSprite = this.add.sprite(360, 800, spriteKey);
 
-    if (isCat) {
-        this.petSprite.setScale(1.25);
-    } else {
-        this.petSprite.setScale(1.0);
+        if (isCat) {
+            this.petSprite.setScale(1.25);
+        } else {
+            this.petSprite.setScale(1.0);
+        }
+
+        if (this.anims.exists(animKey)) {
+            this.petSprite.play(animKey);
+        }
+
+        this.nameText.setText(this.data.name);
+        this.updateStatBars(this.data);
     }
-
-    if (this.anims.exists(animKey)) {
-        this.petSprite.play(animKey);
-    }
-
-    this.nameText.setText(this.data.name);
-    this.updateStatBars(this.data);
-}
 
 
     setBarValue(type, value) {
@@ -580,75 +600,82 @@ class HomeScreen extends Phaser.Scene {
     }
 
 
+    updateBackground() {
+    if (!this.background || !this.background.scene) return;
 
+    const bgKey = GameData.isNightTime()
+        ? "HomeScreenNight"
+        : "HomeScreenDay";
 
+    this.background.setTexture(bgKey);
+}
 
 
 
 
     showRenameUI() {
-    if (this.renameInput) return;
+        if (this.renameInput) return;
 
-    // Create input box
-    this.renameInput = document.createElement("input");
-    this.renameInput.type = "text";
-    this.renameInput.placeholder = "Enter new name";
-    this.renameInput.style.position = "absolute";
-    this.renameInput.style.top = "260px";
-    this.renameInput.style.left = "50%";
-    this.renameInput.style.transform = "translateX(-50%)";
-    this.renameInput.style.fontSize = "24px";
-    this.renameInput.style.padding = "10px 16px";
-    this.renameInput.style.width = "220px";
-    this.renameInput.style.border = "2px solid #00ccff";
-    this.renameInput.style.borderRadius = "8px";
-    this.renameInput.style.backgroundColor = "#111";
-    this.renameInput.style.color = "#fff";
-    this.renameInput.style.zIndex = 1000;
-    this.renameInput.style.outline = "none";
-    this.renameInput.style.textAlign = "center";
-    document.body.appendChild(this.renameInput);
-    this.renameInput.focus();
+        // Create input box
+        this.renameInput = document.createElement("input");
+        this.renameInput.type = "text";
+        this.renameInput.placeholder = "Enter new name";
+        this.renameInput.style.position = "absolute";
+        this.renameInput.style.top = "260px";
+        this.renameInput.style.left = "50%";
+        this.renameInput.style.transform = "translateX(-50%)";
+        this.renameInput.style.fontSize = "24px";
+        this.renameInput.style.padding = "10px 16px";
+        this.renameInput.style.width = "220px";
+        this.renameInput.style.border = "2px solid #00ccff";
+        this.renameInput.style.borderRadius = "8px";
+        this.renameInput.style.backgroundColor = "#111";
+        this.renameInput.style.color = "#fff";
+        this.renameInput.style.zIndex = 1000;
+        this.renameInput.style.outline = "none";
+        this.renameInput.style.textAlign = "center";
+        document.body.appendChild(this.renameInput);
+        this.renameInput.focus();
 
-    // Create submit button with checkmark
-    this.renameButton = document.createElement("button");
-    this.renameButton.innerText = "✅ Rename";
-    this.renameButton.style.position = "absolute";
-    this.renameButton.style.top = "310px";
-    this.renameButton.style.left = "50%";
-    this.renameButton.style.transform = "translateX(-50%)";
-    this.renameButton.style.fontSize = "20px";
-    this.renameButton.style.padding = "8px 16px";
-    this.renameButton.style.border = "none";
-    this.renameButton.style.borderRadius = "6px";
-    this.renameButton.style.backgroundColor = "#00ccff";
-    this.renameButton.style.color = "#000";
-    this.renameButton.style.fontWeight = "bold";
-    this.renameButton.style.cursor = "pointer";
-    this.renameButton.style.zIndex = 1000;
-    document.body.appendChild(this.renameButton);
+        // Create submit button with checkmark
+        this.renameButton = document.createElement("button");
+        this.renameButton.innerText = "✅ Rename";
+        this.renameButton.style.position = "absolute";
+        this.renameButton.style.top = "310px";
+        this.renameButton.style.left = "50%";
+        this.renameButton.style.transform = "translateX(-50%)";
+        this.renameButton.style.fontSize = "20px";
+        this.renameButton.style.padding = "8px 16px";
+        this.renameButton.style.border = "none";
+        this.renameButton.style.borderRadius = "6px";
+        this.renameButton.style.backgroundColor = "#00ccff";
+        this.renameButton.style.color = "#000";
+        this.renameButton.style.fontWeight = "bold";
+        this.renameButton.style.cursor = "pointer";
+        this.renameButton.style.zIndex = 1000;
+        document.body.appendChild(this.renameButton);
 
-    const submitRename = () => {
-        const newName = this.renameInput.value.trim();
-        if (newName.length > 0) {
-            this.data.name = newName;
-            GameData.save();
-            this.nameText.setText(newName);
-        }
-        this.renameInput.remove();
-        this.renameButton.remove();
-        this.renameInput = null;
-        this.renameButton = null;
-    };
+        const submitRename = () => {
+            const newName = this.renameInput.value.trim();
+            if (newName.length > 0) {
+                this.data.name = newName;
+                GameData.save();
+                this.nameText.setText(newName);
+            }
+            this.renameInput.remove();
+            this.renameButton.remove();
+            this.renameInput = null;
+            this.renameButton = null;
+        };
 
-    this.renameInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            submitRename();
-        }
-    });
+        this.renameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                submitRename();
+            }
+        });
 
-    this.renameButton.addEventListener("click", submitRename);
-}
+        this.renameButton.addEventListener("click", submitRename);
+    }
 
 
 

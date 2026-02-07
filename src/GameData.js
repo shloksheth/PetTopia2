@@ -5,6 +5,7 @@ const GameData = {
     activePetIndex: 0,
     coins: 100,
     gems: 10,
+    isNight: false, // 🌙 Track day/night state
     inventory: {
         pizza: 1,
         meat: 0,
@@ -26,6 +27,7 @@ const GameData = {
                 apple: 0,
                 fish: 0
             };
+            this.isNight = parsed.isNight ?? false;
         } else {
             // First-time setup
             this.pets = [{
@@ -38,6 +40,7 @@ const GameData = {
             this.activePetIndex = 0;
             this.coins = 100;
             this.gems = 10;
+            this.isNight = false;
             this.inventory = {
                 pizza: 0,
                 meat: 0,
@@ -48,14 +51,14 @@ const GameData = {
         }
     },
 
-
     save() {
         localStorage.setItem("petGameData", JSON.stringify({
             pets: this.pets,
             activePetIndex: this.activePetIndex,
             coins: this.coins,
             gems: this.gems,
-            inventory: this.inventory
+            inventory: this.inventory,
+            isNight: this.isNight
         }));
     },
 
@@ -71,7 +74,6 @@ const GameData = {
             this.save(); // Save again after switching
         }
     },
-
 
     addPet(name, type) {
         if (this.pets.length >= 2) return false;
@@ -102,6 +104,33 @@ const GameData = {
     reset() {
         localStorage.removeItem("petGameData");
         this.load();
+    },
+
+    // 🌞 Day/Night control
+    toggleDayNight() {
+        this.isNight = !this.isNight;
+        this.save();
+    },
+
+    setDay() {
+        this.isNight = false;
+        this.save();
+    },
+
+    setNight() {
+        this.isNight = true;
+        this.save();
+    },
+
+    isNightTime() {
+        return this.isNight;
+    },
+
+    // ⚡ Energy management
+    addEnergy(amount) {
+        const pet = this.getActivePet();
+        pet.energy = Math.min(100, pet.energy + amount);
+        this.save();
     }
 };
 
