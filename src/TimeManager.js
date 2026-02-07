@@ -19,7 +19,6 @@ class TimeManager extends Phaser.Scene {
             callback: () => {
                 GameData.toggleDayNight();
                 const isNight = GameData.isNightTime();
-                console.log("Toggled day/night. Now:", isNight ? "Night" : "Day");
                 this.game.events.emit("daynight-changed", isNight);
             }
         });

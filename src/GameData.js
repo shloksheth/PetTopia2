@@ -52,6 +52,11 @@ const GameData = {
     },
 
     save() {
+        if (!this.pets || !Array.isArray(this.pets)) {
+            console.warn("GameData.save() aborted: pets data is missing or invalid.");
+            return;
+        }
+
         localStorage.setItem("petGameData", JSON.stringify({
             pets: this.pets,
             activePetIndex: this.activePetIndex,
@@ -61,6 +66,7 @@ const GameData = {
             isNight: this.isNight
         }));
     },
+
 
     getActivePet() {
         return this.pets[this.activePetIndex];

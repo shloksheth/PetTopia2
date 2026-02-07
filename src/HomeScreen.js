@@ -139,19 +139,24 @@ class HomeScreen extends Phaser.Scene {
 
 
 
-        this.anims.create({
-            key: "dog_idle",
-            frames: [...Array(8)].map((_, i) => ({ key: "idle" + (i + 1) })),
-            frameRate: 6,
-            repeat: -1
-        });
+        if (!this.anims.exists("dog_idle")) {
+            this.anims.create({
+                key: "dog_idle",
+                frames: [...Array(8)].map((_, i) => ({ key: "idle" + (i + 1) })),
+                frameRate: 6,
+                repeat: -1
+            });
+        }
 
-        this.anims.create({
-            key: "cat_idle",
-            frames: [...Array(8)].map((_, i) => ({ key: "idle_cat" + (i + 1) })),
-            frameRate: 6,
-            repeat: -1
-        });
+        if (!this.anims.exists("cat_idle")) {
+            this.anims.create({
+                key: "cat_idle",
+                frames: [...Array(8)].map((_, i) => ({ key: "idle_cat" + (i + 1) })),
+                frameRate: 6,
+                repeat: -1
+            });
+        }
+
         this.loadPet();
 
 
@@ -601,14 +606,14 @@ class HomeScreen extends Phaser.Scene {
 
 
     updateBackground() {
-    if (!this.background || !this.background.scene) return;
+        if (!this.background || !this.background.scene) return;
 
-    const bgKey = GameData.isNightTime()
-        ? "HomeScreenNight"
-        : "HomeScreenDay";
+        const bgKey = GameData.isNightTime()
+            ? "HomeScreenNight"
+            : "HomeScreenDay";
 
-    this.background.setTexture(bgKey);
-}
+        this.background.setTexture(bgKey);
+    }
 
 
 

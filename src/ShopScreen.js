@@ -17,7 +17,15 @@ class ShopScreen extends Phaser.Scene {
 
     create() {
         GameData.load();
+        this.data = GameData;
+
+        if (typeof this.data.coins !== "number") this.data.coins = 0;
+        if (typeof this.data.gems !== "number") this.data.gems = 0;
+        if (!this.data.inventory) this.data.inventory = {};
+
         this.registry.set("coins", this.data.coins);
+
+
         if (!this.data.inventory) this.data.inventory = {};
 
         this.add.image(360, 640, "shop_bg").setOrigin(0.5);
@@ -26,6 +34,7 @@ class ShopScreen extends Phaser.Scene {
             fontSize: "48px",
             color: "#ffffff"
         }).setOrigin(0.5);
+
 
         this.foods = [
             { key: "pizza", label: "Pizza", cost: 15, desc: "A cheesy slice of pizza." },
@@ -40,7 +49,7 @@ class ShopScreen extends Phaser.Scene {
         this.createItemDisplay(this.foods[this.currentIndex]);
 
         // Arrows
-        this.leftArrow = this.add.image(600, 1050, "left_arrow")         
+        this.leftArrow = this.add.image(600, 1050, "left_arrow")
             .setInteractive({ useHandCursor: true })
             .setScale(0.4)
             .setDepth(10)
@@ -71,7 +80,7 @@ class ShopScreen extends Phaser.Scene {
         });
     }
 
-    createItemDisplay(food) { 
+    createItemDisplay(food) {
         this.clearDisplay();
 
         const centerX = 360;
@@ -114,26 +123,57 @@ class ShopScreen extends Phaser.Scene {
             fontSize: "32px",
             color: "#ffffff"
         }).setOrigin(0.5);
-
         buyBtn.on("pointerdown", () => {
-            this.tweens.add({
-                targets: buyBtn,
-                scaleX: 0.75,
-                scaleY: 0.75,
-                duration: 80,
-                yoyo: true,
-                ease: "Quad.easeInOut"
-            });
-
+            // 1. Success Path
             if (this.data.coins >= food.cost) {
+                // Simple success animation (shrink/grow)
+                this.tweens.add({
+                    targets: buyBtn,
+                    scaleX: 0.75,
+                    scaleY: 0.75,
+                    duration: 80,
+                    yoyo: true,
+                    ease: "Quad.easeInOut"
+                });
+
                 this.data.coins -= food.cost;
                 this.data.inventory[food.key]++;
-                GameData.save(this.data);
 
+                // Sync global data and persist
+                GameData.coins = this.data.coins;
+                GameData.save();
+
+                // Update UI
                 ownedText.setText(`Owned: ${this.data.inventory[food.key]}`);
                 this.registry.set("coins", this.data.coins);
+
+            } else {
+                // 2. Failure Path: Shake and Red Tint
+
+                // Shake the main camera
+                // Parameters: (duration in ms, intensity)
+                this.cameras.main.shake(200, 0.01);
+
+                // Flash the button red
+                buyBtn.setTint(0xff0000);
+
+                // Clear the red tint after a short delay
+                this.time.delayedCall(300, () => {
+                    buyBtn.clearTint();
+                });
+
+                // Optional: Add a subtle horizontal "No" shake just to the button
+                this.tweens.add({
+                    targets: buyBtn,
+                    x: buyBtn.x + 10,
+                    duration: 50,
+                    yoyo: true,
+                    repeat: 2,
+                    onComplete: () => { buyBtn.x = 360; } // Reset to center
+                });
             }
         });
+        
 
         this.displayedElements.push(icon, name, desc, cost, ownedText, buyBtn, buyLabel);
     }

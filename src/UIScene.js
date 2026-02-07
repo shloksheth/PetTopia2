@@ -1,39 +1,64 @@
 class UIScene extends Phaser.Scene {
     constructor() {
-        super({ key: "UIScene", active: true }); // auto-starts this scene 
+        super({ key: "UIScene", active: true }); 
     }
+
     preload() {
+        // Shared UI Assets
         this.load.image("coin_icon", "assets/icons/gold coin.png");
         this.load.image("gem_icon", "assets/icons/gems.png");
-        this.load.image("button", "assets/icons/button.png"); // if used in TopBar
+        this.load.image("button", "assets/icons/button.png"); 
         this.load.image("orange_box", "assets/icons/orangebox.png");
-        this.load.image("topbar_bg", "assets/icons/topbar_gradient.png"); // or whatever path you saved it as
-
-
+        this.load.image("topbar_bg", "assets/icons/topbar_gradient.png");
     }
 
     create() {
+        // Ensure GameData is fresh and loaded
         GameData.load();
-        const pet = GameData.getActivePet(); // Make sure GameData is loaded first
+
+        // FIX: Use GameData top-level properties. 
+        // This prevents the "reset to 1" or "0" bug when switching pets.
         this.topBar = new TopBar(this, {
-            coins: pet.coins || 0,
-            gems: pet.gems || 0
+            coins: GameData.coins,
+            gems: GameData.gems
         });
 
+        // Sync initial coins to the registry so other scenes start with the right value
+        this.registry.set("coins", GameData.coins);
+        this.registry.set("gems", GameData.gems);
 
-        // Listen for custom stat updates (used by HomeScreen)
+        /**
+         * Custom Event Listener
+         * Used by: SleepScreen, Debug Menu
+         */
         this.registry.events.on("update-stats", (newData) => {
-            this.topBar.updateCounters(newData);
+            if (newData) {
+                this.topBar.updateCounters(newData);
+            }
         });
 
-        // 🔥 Listen for registry changes (used by ShopScreen)
+        /**
+         * Data Manager Listener
+         * Used by: ShopScreen via this.registry.set("coins", value)
+         */
         this.registry.events.on("changedata", (parent, key, value) => {
             if (key === "coins") {
                 this.topBar.updateCoins(value);
             }
+            if (key === "gems") {
+                // If you add a gem update method to TopBar
+                if (this.topBar.updateGems) {
+                    this.topBar.updateGems(value);
+                }
+            }
         });
 
+        // Launch the initial game screen
         this.scene.launch("HomeScreen");
+        
+        // Keep the UI on top of everything
         this.scene.bringToTop("UIScene");
     }
 }
+
+window.UIScene = UIScene;

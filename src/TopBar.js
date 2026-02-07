@@ -16,10 +16,10 @@ class TopBar {
             .setOrigin(0.5)
             .setDisplaySize(width + 36000, 350)
             .setDepth(9); // Behind all icons and text
-        
-            
+
+
     }
-    
+
 
     createCounters() {
         const { scene, data } = this;
@@ -27,15 +27,15 @@ class TopBar {
         // Coin Box
         const coinBox = scene.add.image(100, 60, "orange_box")
             .setOrigin(0.5)
-            .setDisplaySize(110, 60) // compact and slightly taller
+            .setDisplaySize(140, 60) // compact and slightly taller
             .setDepth(11);
 
-        scene.add.image(75, 60, "coin_icon")
+        scene.add.image(70, 60, "coin_icon")
             .setOrigin(0.5)
             .setDisplaySize(36, 36)
             .setDepth(12);
 
-        this.coinText = scene.add.text(100, 60, data.coins.toString(), {
+        this.coinText = scene.add.text(105, 60, data.coins.toString(), {
             fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -44,17 +44,17 @@ class TopBar {
         }).setOrigin(0, 0.5).setDepth(12);
 
         // Gem Box
-        const gemBox = scene.add.image(240, 60, "orange_box")
+        const gemBox = scene.add.image(270, 60, "orange_box")
             .setOrigin(0.5)
-            .setDisplaySize(110, 60)
+            .setDisplaySize(140, 60)
             .setDepth(11);
 
-        scene.add.image(215, 60, "gem_icon")
+        scene.add.image(230, 60, "gem_icon")
             .setOrigin(0.5)
-            .setDisplaySize(36, 36)
+            .setDisplaySize(58, 58)
             .setDepth(12);
 
-        this.gemText = scene.add.text(240, 60, data.gems.toString(), {
+        this.gemText = scene.add.text(250, 60, data.gems.toString(), {
             fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -77,16 +77,18 @@ class TopBar {
         }).setOrigin(0.5).setDepth(12).setInteractive({ useHandCursor: true });
 
         this.gear.on("pointerdown", () => this.togglePopup());
-        
+
     }
 
 
 
 
     updateCounters(newData) {
+        if (!newData) return;
         this.animateText(this.coinText, parseInt(this.coinText.text), newData.coins);
         this.animateText(this.gemText, parseInt(this.gemText.text), newData.gems);
     }
+
 
     updateCoins(newAmount) {
         this.animateText(this.coinText, parseInt(this.coinText.text), newAmount);
@@ -131,13 +133,13 @@ class TopBar {
         const x = scene.scale.width - 60;
         const y = 100;
 
-        this.popupBg = scene.add.rectangle(x, y, 160, 200, 0x222222, 0.95)
+        this.popupBg = scene.add.rectangle(x, y, 160, 245, 0x222222, 0.95)
             .setOrigin(1, 0)
             .setStrokeStyle(2, 0xffffff)
             .setVisible(false)
             .setDepth(20);
 
-        const options = ["Settings", "Credits", "Help", "Exit"];
+        const options = ["Settings", "Credits", "Help", "Debug", "Exit"];
         this.popupItems = options.map((label, i) => {
             const item = scene.add.text(x - 150, y + 10 + i * 45, label, {
                 fontSize: "26px",
@@ -156,10 +158,13 @@ class TopBar {
                     this.showCreditsPopup();
                 } else if (label === "Help") {
                     alert("This is a pet care game. Feed, play, and keep your pet happy!");
+                } else if (label === "Debug") {
+                    this.showDebugDialog();
                 } else if (label === "Exit") {
                     scene.game.destroy(true);
                 }
             });
+
 
             return item;
         });
@@ -176,6 +181,92 @@ class TopBar {
         this.popupBg.setVisible(false);
         this.popupItems.forEach(item => item.setVisible(false));
     }
+    showDebugDialog() {
+        const { scene } = this;
+
+        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6)
+            .setDepth(70)
+            .setInteractive();
+
+        const panel = scene.add.rectangle(360, 640, 500, 400, 0x222222, 0.95)
+            .setStrokeStyle(4, 0xffffff)
+            .setDepth(71);
+
+        const title = scene.add.text(360, 500, "Debug Panel", {
+            fontSize: "42px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0.5).setDepth(72);
+
+        const coinLabel = scene.add.text(200, 580, "Coins:", {
+            fontSize: "28px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0, 0.5).setDepth(72);
+
+        const coinInput = scene.add.dom(400, 580).createFromHTML(`
+        <input type="number" id="coinInput" value="${GameData.coins}" style="
+            font-size: 24px;
+            padding: 6px;
+            width: 120px;
+            border-radius: 6px;
+            border: none;
+            text-align: center;
+        ">
+    `).setOrigin(0.5).setDepth(1000); // Ensure it's above everything
+
+        const gemLabel = scene.add.text(200, 640, "Gems:", {
+            fontSize: "28px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0, 0.5).setDepth(72);
+
+        const gemInput = scene.add.dom(400, 640).createFromHTML(`
+        <input type="number" id="gemInput" value="${GameData.gems}" style="
+            font-size: 24px;
+            padding: 6px;
+            width: 120px;
+            border-radius: 6px;
+            border: none;
+            text-align: center;
+        ">
+    `).setOrigin(0.5).setDepth(1000);
+
+        const okBtn = scene.add.text(360, 720, "OK", {
+            fontSize: "30px",
+            fontFamily: "Arial Black",
+            color: "#00ff88",
+            backgroundColor: "#000",
+            padding: { x: 20, y: 10 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(72);
+
+        okBtn.on("pointerdown", () => {
+            const coinField = coinInput.getChildByProperty("id", "coinInput");
+            const gemField = gemInput.getChildByProperty("id", "gemInput");
+
+            if (!coinField || !gemField) {
+                console.warn("Input fields not found.");
+                return;
+            }
+
+            const coins = parseInt(coinField.value);
+            const gems = parseInt(gemField.value);
+
+            if (!isNaN(coins)) GameData.coins = coins;
+            if (!isNaN(gems)) GameData.gems = gems;
+
+            GameData.save();
+            this.scene.registry.events.emit("update-stats", {
+                coins: GameData.coins,
+                gems: GameData.gems
+            });
+
+            [overlay, panel, title, coinLabel, coinInput, gemLabel, gemInput, okBtn].forEach(el => el.destroy());
+        });
+
+    }
+
+
     showSettingsMenu() {
         const { scene } = this;
         const overlay = scene.add.rectangle(360, 660, 720, 1280, 0x000000, 0.6)
