@@ -12,7 +12,12 @@ class StatsScreen extends Phaser.Scene {
         GameData.load();
         const stats = GameData.stats;
         const pet = GameData.getActivePet();
-
+        const achievementMap = {
+            "first_pet": "🐾 First Pet Raised",
+            "first_adult": "🐕 First Adult Form",
+            "first_evolution": "🐉 First Evolution",
+            "perfect_week": "🌟 Perfect Care Week"
+        };
         // Background
         const bg = this.add.image(360, 640, "HomeScreenDay").setOrigin(0.5);
         bg.setDisplaySize(this.scale.width, this.scale.height);
@@ -68,7 +73,7 @@ class StatsScreen extends Phaser.Scene {
         yPos += spacing;
         this.createStatLine("Perfect Care Days:", stats.perfectCareDays || 0, yPos);
         yPos += spacing;
-        
+
         if (pet) {
             this.createStatLine("Current Pet Level:", pet.level || 1, yPos);
             yPos += spacing;
@@ -101,12 +106,6 @@ class StatsScreen extends Phaser.Scene {
         }).setOrigin(0.5);
         yPos += spacing;
 
-        const achievementMap = {
-            "first_pet": "🐾 First Pet Raised",
-            "first_adult": "🐕 First Adult Form",
-            "first_evolution": "🐉 First Evolution",
-            "perfect_week": "🌟 Perfect Care Week"
-        };
 
         if (GameData.achievements.length === 0) {
             this.add.text(360, yPos, "No achievements yet", {

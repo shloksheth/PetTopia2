@@ -102,7 +102,7 @@ class CustomizationScreen extends Phaser.Scene {
         ];
 
         skins.forEach((skin, i) => {
-            const isOwned = skin.cost === 0 || GameData.customization.unlockedBackgrounds?.includes(skin.id);
+           // const isOwned = skin.cost === 0 || GameData.customization.unlockedBackgrounds?.includes(skin.id);
             const canAfford = GameData.gems >= skin.cost;
             
             const btn = this.add.text(200 + i * 160, yPos, skin.name, {
@@ -134,6 +134,7 @@ class CustomizationScreen extends Phaser.Scene {
                     pet.customization.skin = skin.id;
                     GameData.stats.totalGemsSpent += skin.cost;
                     GameData.save();
+                    this.registry.events.emit("update-stats");
                     this.scene.restart();
                 }
             });

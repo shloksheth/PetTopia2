@@ -6,7 +6,7 @@ class BathingScreen extends Phaser.Scene {
     preload() {
         if (!this.textures.exists("button")) this.load.image("button", "assets/icons/button.png");
         this.load.image("HomeScreenDay", "assets/backgrounds/HomeScreenDay.png");
-        
+
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
             this.load.image('idle_cat' + i, `assets/sprites/pets/idle cat animation/idle ${i}.png`);
@@ -15,9 +15,15 @@ class BathingScreen extends Phaser.Scene {
 
     create() {
         GameData.load();
-        const pet = GameData.getActivePet();
+        // In BathingScreen.js create()
+        // Change this:
+        const petclean = this.petData.cleanliness = Math.min(100, this.petData.cleanliness + amount);
+        this.petData = GameData.getActivePet();
         const isCat = pet.type === "cat";
+        const spriteKey = isCat ? 'idle_cat1' : 'idle1';
 
+        this.pet = this.add.sprite(360, 500, spriteKey);
+        // ... setup animations based on isCat ...
         // Background
         const bg = this.add.image(360, 640, "HomeScreenDay").setOrigin(0.5);
         bg.setDisplaySize(this.scale.width, this.scale.height);
@@ -32,7 +38,7 @@ class BathingScreen extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Pet sprite
-        const spriteKey = isCat ? "idle_cat1" : "idle1";
+
         const animKey = isCat ? "cat_idle" : "dog_idle";
 
         if (!this.anims.exists("dog_idle")) {
@@ -61,7 +67,7 @@ class BathingScreen extends Phaser.Scene {
         this.pet.play(animKey);
 
         // Cleanliness display
-        const cleanliness = pet.cleanliness !== undefined ? pet.cleanliness : 100;
+        const cleanliness = petclean !== undefined ? petclean : 100;
         this.cleanlinessText = this.add.text(360, 200, `Cleanliness: ${Math.round(cleanliness)}/100`, {
             fontSize: "32px",
             fontFamily: "Arial Black",
@@ -142,12 +148,12 @@ class BathingScreen extends Phaser.Scene {
 
     performAction(action, amount) {
         const pet = GameData.getActivePet();
-        if (!pet.cleanliness) pet.cleanliness = 100;
-        
-        const oldValue = pet.cleanliness;
-        pet.cleanliness = Math.min(100, pet.cleanliness + amount);
+        if (!petclean) petclean = 100;
+
+        const oldValue = petclean;
+        petclean = Math.min(100, petclean + amount);
         pet.isDirty = false;
-        
+
         // Animate pet
         this.tweens.add({
             targets: this.pet,
@@ -158,8 +164,8 @@ class BathingScreen extends Phaser.Scene {
         });
 
         // Update display
-        this.cleanlinessText.setText(`Cleanliness: ${Math.round(pet.cleanliness)}/100`);
-        
+        this.cleanlinessText.setText(`Cleanliness: ${Math.round(petclean)}/100`);
+
         // Add sparkles effect
         for (let i = 0; i < 5; i++) {
             const sparkle = this.add.text(

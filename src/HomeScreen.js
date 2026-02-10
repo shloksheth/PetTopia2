@@ -4,9 +4,6 @@ class HomeScreen extends Phaser.Scene {
     }
 
     preload() {
-        if (!this.textures.exists("button")) this.load.image("button", "assets/icons/button.png");
-        if (!this.textures.exists("coin_icon")) this.load.image("coin_icon", "assets/icons/gold coin.png");
-        if (!this.textures.exists("gem_icon")) this.load.image("gem_icon", "assets/icons/gems.png");
 
         this.load.image("pizza", "assets/icons/pizza.png");
         this.load.image("meat", "assets/ui/meat_without_bg_2.png");
@@ -32,9 +29,16 @@ class HomeScreen extends Phaser.Scene {
         const centerX = this.scale.width / 2;
         const margin = 30;
 
+        // Respect the persistent UI top and bottom bar heights (if provided by UIScene)
+        const bottomBarHeight = this.registry.get('bottomBarHeight') || Math.round(Math.max(64, this.scale.height * 0.10));
+        const topBarHeight = this.registry.get('topBarHeight') || 120;
+        const usableHeight = this.scale.height - bottomBarHeight - topBarHeight;
+        this._usableHeight = usableHeight; // save for use in loadPet
+        this._topOffset = topBarHeight;
+
         GameData.load();
         this.data = GameData.getActivePet();
-        
+
         // Safety check - ensure pet exists
         if (!this.data) {
             console.error("No active pet found! Creating default pet...");
@@ -48,8 +52,8 @@ class HomeScreen extends Phaser.Scene {
         this.currentBgKey = GameData.isNightTime() ? "HomeScreenNight" : "HomeScreenDay";
 
         // Create background image first
-        this.background = this.add.image(-32.5, 0, this.currentBgKey).setOrigin(0);
-        this.background.setDisplaySize(this.scale.width + 75, this.scale.height);
+        this.background = this.add.image(-32.5, this._topOffset, this.currentBgKey).setOrigin(0);
+        this.background.setDisplaySize(this.scale.width + 75, usableHeight);
 
         // Now safe to call updateBackground
         this.updateBackground();
@@ -77,13 +81,12 @@ class HomeScreen extends Phaser.Scene {
         this.closeFoodPopup();
         this.registry.events.emit("update-stats", this.data);
 
-        // Pet Name Section - Centered at top
-        const nameBg = this.add.rectangle(centerX, 150, 400, 80, 0x000000, 0.6)
-            .setStrokeStyle(3, 0xffffff)
-            .setOrigin(0.5)
-            .setDepth(10);
+        // Pet Name Section - Centered at top (use top area of usable screen)
+        const nameY = this._topOffset + Math.round(Math.max(24, usableHeight * 0.06));
 
-        this.nameText = this.add.text(centerX, 150, this.data.name, {
+
+
+        this.nameText = this.add.text(centerX, nameY, this.data.name, {
             fontSize: "42px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -94,19 +97,19 @@ class HomeScreen extends Phaser.Scene {
         this.nameText.on("pointerdown", () => this.showRenameUI());
 
         // Rename button
-        this.renameBtn = this.add.circle(centerX + 180, 150, 25, 0x444444, 0.9)
+        this.renameBtn = this.add.circle(centerX + 180, 182, 25, 0x444444, 0.9)
             .setStrokeStyle(2, 0xffffff)
             .setInteractive({ useHandCursor: true })
             .setDepth(11);
 
-        this.add.text(centerX + 180, 150, "✏️", {
+        this.add.text(centerX + 180, 182, "✏️", {
             fontSize: "20px"
         }).setOrigin(0.5).setDepth(12);
 
         this.renameBtn.on("pointerdown", () => this.showRenameUI());
 
         // Level and Growth Stage Display
-        const levelText = this.add.text(centerX, 210, `Level ${this.data.level} • ${this.data.growthStage.toUpperCase()}`, {
+        const levelText = this.add.text(centerX, nameY + 60, `Level ${this.data.level} • ${this.data.growthStage.toUpperCase()}`, {
             fontSize: "24px",
             fontFamily: "Arial",
             color: "#ffff00",
@@ -114,30 +117,22 @@ class HomeScreen extends Phaser.Scene {
             strokeThickness: 2
         }).setOrigin(0.5).setDepth(11);
 
-        // Stat Bars - Better positioned at bottom
-        const barY = 1050;
+        // Stat Bars - positioned above the action buttons, confined to usableHeight
+        const barY = this._topOffset + Math.round(usableHeight - 220);
         this.bars = {
-            hunger: this.createBar("Hunger", centerX - 200, barY, 0x00cc66, this.data.hunger),
-            water: this.createBar("Water", centerX, barY, 0x0099ff, this.data.water),
-            energy: this.createBar("Health", centerX + 200, barY, 0xffcc00, this.data.energy)
+            water: this.createBar("Water", centerX - 230, barY, 0x0099ff, this.data.water),
+            hunger: this.createBar("Hunger", centerX + 230, barY, 0x00cc66, this.data.hunger),
+            energy: this.createBar("Health", centerX, barY, 0xffcc00, this.data.energy)
         };
 
         // Happiness Thermometer - Left side, better positioned
-        this.happinessBarX = 50;
-        this.happinessBarY = 500;
-        this.happinessBarWidth = 50;
-        this.happinessBarHeight = 350;
+        this.happinessBarX = 80;
+        this.happinessBarY = 600;
+        this.happinessBarWidth = 40;
+        this.happinessBarHeight = 400;
 
         // Happiness Thermometer Background
-        this.happinessBg = this.add.rectangle(
-            this.happinessBarX,
-            this.happinessBarY,
-            this.happinessBarWidth + 20,
-            this.happinessBarHeight + 40,
-            0x222222,
-            0.9
-        ).setStrokeStyle(4, 0xffffff)
-        .setOrigin(0.5).setDepth(4);
+
 
         // Label above thermometer
         this.add.text(this.happinessBarX, this.happinessBarY - this.happinessBarHeight / 2 - 30, "HAPPINESS", {
@@ -162,7 +157,7 @@ class HomeScreen extends Phaser.Scene {
             0x000000,
             0.3
         ).setOrigin(0.5).setDepth(6);
-        
+
         this.happinessFace = this.add.image(
             this.happinessBarX,
             this.getHappinessY(this.data.happiness),
@@ -181,7 +176,7 @@ class HomeScreen extends Phaser.Scene {
                 strokeThickness: 3
             }
         ).setOrigin(0.5).setDepth(10);
-        
+
         // Update happiness color based on value
         this.updateHappinessColor(this.data.happiness);
 
@@ -206,9 +201,8 @@ class HomeScreen extends Phaser.Scene {
             });
         }
 
-        // Load pet sprite
-        this.loadPet();
-
+        // Load pet sprite at a Y inside the usable area
+        this.petY = this._topOffset + Math.round(usableHeight * 0.55);
         this.loadPet();
 
         // Smelly Overlay
@@ -222,13 +216,13 @@ class HomeScreen extends Phaser.Scene {
             .setVisible(false);
 
         // Status Icons - Better positioned
-        this.poopIcon = this.add.text(this.petSprite.x + 120, this.petSprite.y - 80, "💩", { 
+        this.poopIcon = this.add.text(this.petSprite.x + 120, this.petSprite.y - 80, "💩", {
             fontSize: "56px",
             stroke: "#000000",
             strokeThickness: 3
         }).setVisible(false).setDepth(20);
-        
-        this.sickIcon = this.add.text(this.petSprite.x + 120, this.petSprite.y + 80, "🤮", { 
+
+        this.sickIcon = this.add.text(this.petSprite.x + 120, this.petSprite.y + 80, "🤮", {
             fontSize: "56px",
             stroke: "#000000",
             strokeThickness: 3
@@ -238,44 +232,99 @@ class HomeScreen extends Phaser.Scene {
         this.game.events.on("tasks-updated", this.refreshTaskVisuals, this);
 
         // Action Buttons - Organized in a clean grid
-        const buttonStartY = 1120;
+        const buttonStartY = this._topOffset + Math.round(usableHeight - 140);
         const buttonSpacing = 130;
         const buttonSize = 100;
         const buttonRadius = 15;
 
         // Row 1: Primary Actions
         const createActionButton = (x, y, emoji, label, action, color = 0x4a90e2) => {
-            const btnBg = this.add.rectangle(x, y, buttonSize, buttonSize, color, 0.9)
-                .setStrokeStyle(3, 0xffffff)
-                .setInteractive({ useHandCursor: true })
-                .setDepth(10);
+            const buttonSize = 100; // Adjust based on your spacing
+            const cornerRadius = 22;
 
+            // 1. Create the Rounded Background using Graphics
+            const graphics = this.add.graphics().setDepth(10);
+
+            // Draw Shadow (offset slightly)
+            graphics.fillStyle(0x000000, 0.2);
+            graphics.fillRoundedRect(x - (buttonSize / 2) + 4, y - (buttonSize / 2) + 4, buttonSize, buttonSize, cornerRadius);
+
+            // Draw Main Button
+            graphics.fillStyle(color, 1);
+            graphics.fillRoundedRect(x - (buttonSize / 2), y - (buttonSize / 2), buttonSize, buttonSize, cornerRadius);
+
+            // Draw Border
+            graphics.lineStyle(3, 0xffffff, 1);
+            graphics.strokeRoundedRect(x - (buttonSize / 2), y - (buttonSize / 2), buttonSize, buttonSize, cornerRadius);
+
+            // 2. Create an invisible Hit Area for interactions
+            // Since Graphics aren't "interactive" in the same way, we use a transparent rectangle
+            const hitArea = this.add.rectangle(x, y, buttonSize, buttonSize, 0x000000, 0)
+                .setInteractive({ useHandCursor: true })
+                .setDepth(12);
+
+            // 3. Icon and Label
             const btnIcon = this.add.text(x, y - 15, emoji, {
                 fontSize: "44px"
             }).setOrigin(0.5).setDepth(11);
 
-            const btnLabel = this.add.text(x, y + 30, label, {
-                fontSize: "18px",
+            const btnLabel = this.add.text(x, y + 32, label.toUpperCase(), {
+                fontSize: "16px",
                 fontFamily: "Arial Black",
                 color: "#ffffff",
                 stroke: "#000000",
                 strokeThickness: 2
             }).setOrigin(0.5).setDepth(11);
 
-            btnBg.on("pointerdown", action);
-            btnBg.on("pointerover", () => btnBg.setFillStyle(color, 1));
-            btnBg.on("pointerout", () => btnBg.setFillStyle(color, 0.9));
+            // 4. Aesthetics & Animations
+            hitArea.on("pointerdown", () => {
+                // Squish effect
+                this.tweens.add({
+                    targets: [btnIcon, btnLabel],
+                    scale: 0.9,
+                    duration: 80,
+                    yoyo: true,
+                    onComplete: action
+                });
+            });
 
-            return { bg: btnBg, icon: btnIcon, label: btnLabel };
+            hitArea.on("pointerover", () => {
+                // Subtle lift effect
+                this.tweens.add({
+                    targets: [btnIcon, btnLabel],
+                    y: "-=5",
+                    duration: 200,
+                    ease: 'Power2'
+                });
+                graphics.setAlpha(0.9);
+            });
+
+            hitArea.on("pointerout", () => {
+                this.tweens.add({
+                    targets: [btnIcon, btnLabel],
+                    y: (y - 15) || (y + 32), // Return to original Y
+                    y: (target) => target === btnIcon ? y - 15 : y + 32,
+                    duration: 200,
+                    ease: 'Power2'
+                });
+                graphics.setAlpha(1);
+            });
+
+            return { bg: graphics, icon: btnIcon, label: btnLabel, hit: hitArea };
         };
 
-        // Row 1: Feed, Play, Shop
-        createActionButton(centerX - buttonSpacing, buttonStartY, "🍖", "Feed", () => {
+        // Compact spacing for a single row of 6 buttons
+        const spacing = 110;
+        const rowY = buttonStartY; // All buttons share the same Y coordinate
+
+        // Button 1: Feed (Left-most)
+        createActionButton(centerX - (spacing * 2.5), rowY, "🍖", "Feed", () => {
             if (this.foodPopup) return;
             this.time.delayedCall(100, () => this.showFoodPopup());
         }, 0xff6b6b);
 
-        createActionButton(centerX, buttonStartY, "🎾", "Play", () => {
+        // Button 2: Play
+        createActionButton(centerX - (spacing * 1.5), rowY, "🎾", "Play", () => {
             if (this.scene.get("PlayScreen")) {
                 this.scene.start("PlayScreen");
             } else {
@@ -284,48 +333,29 @@ class HomeScreen extends Phaser.Scene {
             }
         }, 0x4ecdc4);
 
-        createActionButton(centerX + buttonSpacing, buttonStartY, "🛒", "Shop", () => {
-            this.scene.start("ShopScreen");
-        }, 0xffd93d);
-
-        // Row 2: Care Actions
-        const buttonY2 = buttonStartY + 110;
-        createActionButton(centerX - buttonSpacing, buttonY2, "💤", "Rest", () => {
+        // Button 3: Rest
+        createActionButton(centerX - (spacing * 0.5), rowY, "💤", "Rest", () => {
             this.scene.start("SleepScreen");
         }, 0x95a5a6);
 
-        createActionButton(centerX, buttonY2, "🛁", "Bath", () => {
-            if (this.scene.get("BathingScreen")) {
-                this.scene.start("BathingScreen");
-            } else {
-                if (this.data.cleanliness !== undefined) {
-                    this.setBarValue("cleanliness", Math.min(100, this.data.cleanliness + 30));
-                }
-            }
-        }, 0x3498db);
-
-        createActionButton(centerX + buttonSpacing, buttonY2, "🏥", "Vet", () => {
+        // Button 4: Vet
+        createActionButton(centerX + (spacing * 0.5), rowY, "🏥", "Vet", () => {
             this.scene.start("VetScreen");
         }, 0xe74c3c);
 
-        // Row 3: Utility Actions
-        const buttonY3 = buttonY2 + 110;
-        createActionButton(centerX - buttonSpacing, buttonY3, "📊", "Stats", () => {
+        // Button 5: Stats
+        createActionButton(centerX + (spacing * 1.5), rowY, "📊", "Stats", () => {
             if (this.scene.get("StatsScreen")) {
                 this.scene.start("StatsScreen");
             }
         }, 0x9b59b6);
 
-        createActionButton(centerX, buttonY3, "🎨", "Style", () => {
+        // Button 6: Style (Right-most)
+        createActionButton(centerX + (spacing * 2.5), rowY, "🎨", "Style", () => {
             if (this.scene.get("CustomizationScreen")) {
                 this.scene.start("CustomizationScreen");
             }
         }, 0xe67e22);
-
-        createActionButton(centerX + buttonSpacing, buttonY3, "🐾", "Pets", () => {
-            this.showPetSwitcher();
-        }, 0x1abc9c);
-
 
         // Decrease stats over time
         this.time.addEvent({
@@ -350,10 +380,7 @@ class HomeScreen extends Phaser.Scene {
         const radius = 16;
 
         // Container background for better visibility
-        const containerBg = this.add.rectangle(x, y, barWidth + 20, barHeight + 20, 0x000000, 0.5)
-            .setStrokeStyle(2, 0xffffff)
-            .setOrigin(0.5)
-            .setDepth(1);
+
 
         // Label
         this.add.text(x, y - 30, label, {
@@ -394,7 +421,6 @@ class HomeScreen extends Phaser.Scene {
             height: barHeight,
             x,
             bgY: y,
-            containerBg
         };
     }
 
@@ -445,12 +471,11 @@ class HomeScreen extends Phaser.Scene {
             }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
 
             switchBtn.on("pointerdown", () => {
-                GameData.save(); // Save current pet's state
+                GameData.save();
                 GameData.switchToPet(i);
-                scene.loadPet(); // Refresh pet sprite and stats
+                scene.loadPet(); // Refreshes visuals for the new pet
                 [overlay, panel, title, ...elements].forEach(el => el.destroy());
             });
-
 
             const removeBtn = scene.add.text(500, y + 40, "Remove", {
                 fontSize: "20px",
@@ -468,8 +493,7 @@ class HomeScreen extends Phaser.Scene {
             elements.push(box, nameText, typeText, switchBtn, removeBtn);
         });
 
-        // Check if can add more pets
-        if (pets.length < GameData.maxPetSlots) {
+        if (pets.length < 2) {
             const addBtn = scene.add.text(360, 620, "Add Pet", {
                 fontSize: "28px",
                 fontFamily: "Arial Black",
@@ -482,41 +506,8 @@ class HomeScreen extends Phaser.Scene {
                 [overlay, panel, title, addBtn, ...elements].forEach(el => el.destroy());
                 scene.showAddPetDialog();
             });
-
             elements.push(addBtn);
-        } else if (GameData.maxPetSlots < 5) {
-            // Show buy slot option
-            const buySlotBtn = scene.add.text(360, 620, "Buy Pet Slot (25 💎)", {
-                fontSize: "24px",
-                fontFamily: "Arial Black",
-                color: "#ffff00",
-                backgroundColor: "#000",
-                padding: { x: 20, y: 10 }
-            }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
-
-            buySlotBtn.on("pointerdown", () => {
-                [overlay, panel, title, buySlotBtn, ...elements].forEach(el => el.destroy());
-                scene.scene.start("PetPurchaseScreen");
-            });
-
-            elements.push(buySlotBtn);
         }
-
-        // Always show "Buy Pets" button
-        const buyPetsBtn = scene.add.text(360, 680, "Buy New Pets", {
-            fontSize: "26px",
-            fontFamily: "Arial Black",
-            color: "#00ccff",
-            backgroundColor: "#000",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
-
-        buyPetsBtn.on("pointerdown", () => {
-            [overlay, panel, title, buyPetsBtn, ...elements].forEach(el => el.destroy());
-            scene.scene.start("PetPurchaseScreen");
-        });
-
-        elements.push(buyPetsBtn);
 
         const closeBtn = scene.add.text(360, 700, "Close", {
             fontSize: "28px",
@@ -529,7 +520,6 @@ class HomeScreen extends Phaser.Scene {
         closeBtn.on("pointerdown", () => {
             [overlay, panel, title, closeBtn, ...elements].forEach(el => el.destroy());
         });
-
         elements.push(closeBtn);
     }
 
@@ -539,49 +529,45 @@ class HomeScreen extends Phaser.Scene {
         const panel = scene.add.rectangle(360, 640, 580, 500, 0x222222, 0.95).setStrokeStyle(4, 0xffffff).setDepth(111);
 
         const title = scene.add.text(360, 400, "Add a New Pet", { fontSize: "42px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0.5).setDepth(112);
-        const nameLabel = scene.add.text(160, 470, "Pet Name:", { fontSize: "30px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0, 0.5).setDepth(112);
 
-        const nameInput = scene.add.dom(460, 470).createFromHTML(`
-            <input type="text" id="petNameInput" name="petNameInput" placeholder="Enter name" style="font-size: 24px; padding: 8px; width: 200px; border-radius: 6px; border: none;">
-        `).setDepth(112);
+        // Uses Phaser DOM container for the input field
+        const nameInput = scene.add.dom(360, 470).createFromHTML(`
+        <input type="text" id="petNameInput" placeholder="Pet Name" style="font-size: 24px; padding: 8px; width: 200px; border-radius: 6px;">
+    `).setDepth(112);
 
-        const petTypeLabel = scene.add.text(160, 540, "Choose Type:", { fontSize: "30px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0, 0.5).setDepth(112);
-
-        const dogBtn = scene.add.text(300, 600, "Dog", { fontSize: "28px", fontFamily: "Arial Black", color: "#ffffff", backgroundColor: "#444", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
-        const catBtn = scene.add.text(420, 600, "Cat", { fontSize: "28px", fontFamily: "Arial Black", color: "#ffffff", backgroundColor: "#444", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
-
-        const confirmBtn = scene.add.text(360, 700, "Add Pet", { fontSize: "30px", fontFamily: "Arial Black", color: "#00ff88", backgroundColor: "#000", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
-        const cancelBtn = scene.add.text(360, 770, "Cancel", { fontSize: "28px", fontFamily: "Arial Black", color: "#ffffff", backgroundColor: "#444", padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(112);
-
-        // Helper to clean up all UI elements at once
-        const closeUI = () => {
-            [overlay, panel, title, nameLabel, nameInput, petTypeLabel, dogBtn, catBtn, confirmBtn, cancelBtn].forEach(el => el.destroy());
-        };
+        const dogBtn = scene.add.text(300, 600, "Dog", { fontSize: "28px", backgroundColor: "#444", padding: { x: 10, y: 5 } }).setOrigin(0.5).setInteractive().setDepth(112);
+        const catBtn = scene.add.text(420, 600, "Cat", { fontSize: "28px", backgroundColor: "#444", padding: { x: 10, y: 5 } }).setOrigin(0.5).setInteractive().setDepth(112);
 
         let selectedType = null;
         dogBtn.on("pointerdown", () => { selectedType = "dog"; dogBtn.setBackgroundColor("#00ccff"); catBtn.setBackgroundColor("#444"); });
         catBtn.on("pointerdown", () => { selectedType = "cat"; catBtn.setBackgroundColor("#00ccff"); dogBtn.setBackgroundColor("#444"); });
 
+        const confirmBtn = scene.add.text(360, 700, "Confirm", { fontSize: "30px", color: "#00ff88" }).setOrigin(0.5).setInteractive().setDepth(112);
+
         confirmBtn.on("pointerdown", () => {
-            const inputElement = nameInput.getChildByName("petNameInput");
-            const name = inputElement.value.trim();
-
-            if (!name) return alert("Please enter a name.");
-            if (!selectedType) return alert("Please select a pet type.");
-            if (GameData.pets.some(p => p.name.toLowerCase() === name.toLowerCase())) return alert("Name already taken!");
-
-            const success = GameData.addPet(name, selectedType);
-            if (success) {
-                GameData.activePetIndex = GameData.pets.length - 1;
-                GameData.save();
-                scene.loadPet(); // This will trigger the animation refresh
-                closeUI();
-            } else {
-                alert(`You can only have up to ${GameData.maxPetSlots} pets. Buy more slots in the Pet Store!`);
+            const name = document.getElementById("petNameInput").value.trim();
+            if (name && selectedType) {
+                GameData.addPet(name, selectedType);
+                scene.loadPet();
+                [overlay, panel, title, nameInput, dogBtn, catBtn, confirmBtn].forEach(el => el.destroy());
             }
         });
+    }
 
-        cancelBtn.on("pointerdown", closeUI);
+    showRemovePetDialog(index) {
+        const scene = this;
+        const pet = GameData.pets[index];
+        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6).setDepth(120).setInteractive();
+        const panel = scene.add.rectangle(360, 640, 580, 400, 0x330000, 0.95).setStrokeStyle(4, 0xff4444).setDepth(121);
+
+        const title = scene.add.text(360, 500, `Remove ${pet.name}?`, { fontSize: "32px", color: "#ff4444" }).setOrigin(0.5).setDepth(122);
+        const confirmBtn = scene.add.text(360, 650, "Delete", { fontSize: "30px", backgroundColor: "#ff4444", padding: { x: 15, y: 10 } }).setOrigin(0.5).setInteractive().setDepth(122);
+
+        confirmBtn.on("pointerdown", () => {
+            GameData.removePet(index);
+            scene.loadPet();
+            [overlay, panel, title, confirmBtn].forEach(el => el.destroy());
+        });
     }
     updateStatBars(pet) {
         this.setBarValue("hunger", pet.hunger);
@@ -602,12 +588,12 @@ class HomeScreen extends Phaser.Scene {
             color = 0xff0000; // Red
             emoji = "😞";
         }
-        
+
         // Update thermometer background color
         if (this.happinessBg) {
             this.happinessBg.setFillStyle(color, 0.3);
         }
-        
+
         // Update face emoji based on happiness
         const index = Math.min(4, Math.floor((100 - happiness) / 20));
         if (this.happinessFace) {
@@ -615,75 +601,6 @@ class HomeScreen extends Phaser.Scene {
         }
     }
 
-
-    showRemovePetDialog(index) {
-        const scene = this;
-        const pet = GameData.pets[index];
-
-        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6)
-            .setDepth(120)
-            .setInteractive();
-
-        const panel = scene.add.rectangle(360, 640, 580, 400, 0x330000, 0.95)
-            .setStrokeStyle(4, 0xff4444)
-            .setDepth(121);
-
-        const title = scene.add.text(360, 500, "Remove Pet", {
-            fontSize: "42px",
-            fontFamily: "Arial Black",
-            color: "#ff4444"
-        }).setOrigin(0.5).setDepth(122);
-
-        const warning = scene.add.text(360, 560, `Type "${pet.name}" to confirm deletion`, {
-            fontSize: "24px",
-            fontFamily: "Arial",
-            color: "#ffffff",
-            align: "center",
-            wordWrap: { width: 500 }
-        }).setOrigin(0.5).setDepth(122);
-
-        const input = scene.add.dom(360, 620).createFromHTML(`
-        <input type="text" id="confirmDeleteInput" name="confirmDeleteInput" placeholder="Pet name" style="
-            font-size: 24px;
-            padding: 8px;
-            width: 300px;
-            border-radius: 6px;
-            border: none;
-        ">
-    `).setDepth(122);
-
-        const confirmBtn = scene.add.text(260, 700, "Delete", {
-            fontSize: "30px",
-            fontFamily: "Arial Black",
-            color: "#ffffff",
-            backgroundColor: "#ff4444",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(122);
-
-        confirmBtn.on("pointerdown", () => {
-            const typed = input.getChildByName("confirmDeleteInput").value.trim();
-            if (typed !== pet.name) {
-                alert("Name does not match. Pet not deleted.");
-                return;
-            }
-
-            GameData.removePet(index);
-            scene.loadPet(); // Refresh pet sprite and stats
-            [overlay, panel, title, warning, input, confirmBtn, cancelBtn].forEach(el => el.destroy());
-        });
-
-        const cancelBtn = scene.add.text(460, 700, "Cancel", {
-            fontSize: "28px",
-            fontFamily: "Arial Black",
-            color: "#ffffff",
-            backgroundColor: "#444",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(122);
-
-        cancelBtn.on("pointerdown", () => {
-            [overlay, panel, title, warning, input, confirmBtn, cancelBtn].forEach(el => el.destroy());
-        });
-    }
 
     loadPet() {
         GameData.save();
@@ -695,7 +612,9 @@ class HomeScreen extends Phaser.Scene {
         const spriteKey = isCat ? "idle_cat1" : "idle1";
         const animKey = isCat ? "cat_idle" : "dog_idle";
 
-        this.petSprite = this.add.sprite(360, 800, spriteKey);
+        const centerX = this.scale.width / 2;
+        const petY = this.petY || Math.round(this.scale.height * 0.6);
+        this.petSprite = this.add.sprite(centerX, petY, spriteKey);
 
         if (isCat) {
             this.petSprite.setScale(1.25);
@@ -738,7 +657,7 @@ class HomeScreen extends Phaser.Scene {
             this.happinessOverlay.setDisplaySize(this.happinessBarWidth, overlayHeight);
             this.happinessOverlay.setPosition(this.happinessBarX, overlayTop + overlayHeight / 2);
             this.happinessText.setText(`${Math.round(clamped)}/100`);
-            
+
             // Update color based on happiness
             this.updateHappinessColor(clamped);
         } else if (type === "cleanliness") {
@@ -854,6 +773,7 @@ class HomeScreen extends Phaser.Scene {
 
 
 
+
     showFoodPopup() {
         if (this.foodPopup) return;
 
@@ -861,7 +781,7 @@ class HomeScreen extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(50)
             .setStrokeStyle(4, 0xffffff);
-        
+
         const border = this.add.rectangle(360, 640, 600, 700)
             .setStrokeStyle(4, 0x00ccff)
             .setOrigin(0.5)
@@ -876,7 +796,7 @@ class HomeScreen extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(52);
 
         const foods = [
-            { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger", icon: "🍕" },
+            { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger", icon: "pizza" },
             { key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger", icon: "🍖" },
             { key: "apple", label: "Apple", restore: 10, desc: "Restores 10 hunger", icon: "🍎" },
             { key: "fish", label: "Fish", restore: 15, desc: "Restores 15 hunger", icon: "🐟" },
@@ -911,25 +831,7 @@ class HomeScreen extends Phaser.Scene {
                 strokeThickness: 3
             }).setOrigin(0.5).setDepth(52);
 
-            const shopBtn = this.add.rectangle(360, 600, 200, 60, 0x00ccff, 0.9)
-                .setStrokeStyle(3, 0xffffff)
-                .setInteractive({ useHandCursor: true })
-                .setDepth(52);
 
-            this.add.text(360, 600, "Go to Shop", {
-                fontSize: "28px",
-                fontFamily: "Arial Black",
-                color: "#ffffff",
-                stroke: "#000000",
-                strokeThickness: 2
-            }).setOrigin(0.5).setDepth(53);
-
-            shopBtn.on("pointerdown", () => {
-                this.closeFoodPopup();
-                this.scene.start("ShopScreen");
-            });
-
-            buttons.push(noFoodText, shopBtn);
         } else {
             const startX = 360 - (visibleFoods.length - 1) * 80;
             visibleFoods.forEach((food, i) => {
@@ -945,15 +847,14 @@ class HomeScreen extends Phaser.Scene {
                 // Use emoji if available, otherwise image
                 let icon;
                 if (food.icon) {
-                    icon = this.add.text(x, y - 20, food.icon, {
-                        fontSize: "64px"
-                    }).setOrigin(0.5).setDepth(53);
-                } else {
                     icon = this.add.image(x, y - 20, food.key)
                         .setScale(0.5)
                         .setDepth(53);
+                } else {
+                    icon = this.add.text(x, y - 20, food.icon, {
+                        fontSize: "64px"
+                    }).setOrigin(0.5).setDepth(53);
                 }
-                
                 const qtyText = food.key === "water" ? "∞" : `x${GameData.inventory[food.key] || 0}`;
                 const qty = this.add.text(x, y + 40, qtyText, {
                     fontSize: "20px",
@@ -987,7 +888,7 @@ class HomeScreen extends Phaser.Scene {
                         if (GameData.inventory[food.key] <= 0) return;
                         GameData.inventory[food.key]--;
                     }
-                    
+
                     const stat = food.stat || "hunger";
                     this.setBarValue(stat, this.data[stat] + food.restore);
                     GameData.addXP(this.data, 2);

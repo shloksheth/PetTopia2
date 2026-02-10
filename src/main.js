@@ -8,18 +8,21 @@ window.onload = function () {
         height: 1280,
         backgroundColor: "#000000",
         parent: "game-container",
+        // In main.js config
         scene: [
-            TimeManager, 
-            UIScene, 
-            HomeScreen, 
-            ShopScreen, 
-            VetScreen, 
+            UIScene,      // UI should be early
+            TimeManager,
+            HomeScreen,
+            ShopScreen,
+            WardrobeScreen,
+            VetScreen,
             SleepScreen,
-            PlayScreen,
             BathingScreen,
             StatsScreen,
+            PlayScreen,
             CustomizationScreen,
-            PetPurchaseScreen
+            PetPurchaseScreen,
+            StarterPetScreen
         ],
         scale: {
             mode: Phaser.Scale.FIT,
@@ -31,7 +34,7 @@ window.onload = function () {
     };
 
     const game = new Phaser.Game(config);
-    
+
     // Always start with HomeScreen (default pet is created in GameData.load())
     game.scene.start("HomeScreen");
 };
