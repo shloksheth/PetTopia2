@@ -4,12 +4,12 @@ class UIScene extends Phaser.Scene {
     }
 
     preload() {
-        // Shared UI Assets
-        this.load.image("coin_icon", "assets/icons/gold coin.png");
-        this.load.image("gem_icon", "assets/icons/gems.png");
-        this.load.image("button", "assets/icons/button.png"); 
-        this.load.image("orange_box", "assets/icons/orangebox.png");
-        this.load.image("topbar_bg", "assets/icons/topbar_gradient.png");
+        // Shared UI Assets (only load if not already loaded by another scene)
+        if (!this.textures.exists("coin_icon")) this.load.image("coin_icon", "assets/icons/gold coin.png");
+        if (!this.textures.exists("gem_icon")) this.load.image("gem_icon", "assets/icons/gems.png");
+        if (!this.textures.exists("button")) this.load.image("button", "assets/icons/button.png");
+        if (!this.textures.exists("orange_box")) this.load.image("orange_box", "assets/icons/orangebox.png");
+        if (!this.textures.exists("topbar_bg")) this.load.image("topbar_bg", "assets/icons/topbar_gradient.png");
     }
 
     create() {

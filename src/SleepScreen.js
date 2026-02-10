@@ -8,7 +8,7 @@ class SleepScreen extends Phaser.Scene {
 
     preload() {
         this.load.image("sleep_bg", "assets/backgrounds/sleep_bg.png");
-        this.load.image("button", "assets/icons/button.png");
+        if (!this.textures.exists("button")) this.load.image("button", "assets/icons/button.png");
         this.load.image("dog_sleep", "assets/sprites/pets/sleep/dog_sleep.png");
         this.load.image("cat_sleep", "assets/sprites/pets/sleep/cat_sleep.png");
     }

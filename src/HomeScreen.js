@@ -4,9 +4,9 @@ class HomeScreen extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("button", "assets/icons/button.png");
-        this.load.image("coin_icon", "assets/icons/gold coin.png");
-        this.load.image("gem_icon", "assets/icons/gems.png");
+        if (!this.textures.exists("button")) this.load.image("button", "assets/icons/button.png");
+        if (!this.textures.exists("coin_icon")) this.load.image("coin_icon", "assets/icons/gold coin.png");
+        if (!this.textures.exists("gem_icon")) this.load.image("gem_icon", "assets/icons/gems.png");
 
         this.load.image("pizza", "assets/icons/pizza.png");
         this.load.image("meat", "assets/ui/meat_without_bg_2.png");
@@ -22,11 +22,9 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("HomeScreenNight", "assets/backgrounds/HomeScreenNight.png");
         this.load.image("smelly_overlay", "assets/icons/smelly.png");
 
-
+        // Load pet animations
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
-        }
-        for (let i = 1; i <= 8; i++) {
             this.load.image('idle_cat' + i, `assets/sprites/pets/idle cat animation/idle ${i}.png`);
         }
     }
@@ -36,7 +34,15 @@ class HomeScreen extends Phaser.Scene {
 
         GameData.load();
         this.data = GameData.getActivePet();
-
+        
+        // Safety check - ensure pet exists
+        if (!this.data) {
+            console.error("No active pet found! Creating default pet...");
+            GameData.addPet("Bella", "dog");
+            GameData.activePetIndex = 0;
+            GameData.save();
+            this.data = GameData.getActivePet();
+        }
 
         // Set initial background key
         this.currentBgKey = GameData.isNightTime() ? "HomeScreenNight" : "HomeScreenDay";
@@ -56,59 +62,97 @@ class HomeScreen extends Phaser.Scene {
             this.game.events.off("daynight-changed", this.onDayNightChanged);
         });
 
-
         // Ensure all stats are numbers
         this.data.hunger = Number(this.data.hunger ?? 100);
+        this.data.water = Number(this.data.water ?? 100);
         this.data.energy = Number(this.data.energy ?? 100);
         this.data.happiness = Number(this.data.happiness ?? 100);
+        this.data.health = Number(this.data.health ?? 100);
+        this.data.cleanliness = Number(this.data.cleanliness ?? 100);
+        if (!this.data.xp) this.data.xp = 0;
+        if (!this.data.level) this.data.level = 1;
+        if (!this.data.growthStage) this.data.growthStage = "baby";
         GameData.save();
 
-
-
         this.closeFoodPopup();
-
-
         this.registry.events.emit("update-stats", this.data);
 
-        this.nameText = this.add.text(centerX, 200, this.data.name, {
-            fontSize: "48px",
+        // Pet Name Section - Centered at top
+        const nameBg = this.add.rectangle(centerX, 150, 400, 80, 0x000000, 0.6)
+            .setStrokeStyle(3, 0xffffff)
+            .setOrigin(0.5)
+            .setDepth(10);
+
+        this.nameText = this.add.text(centerX, 150, this.data.name, {
+            fontSize: "42px",
+            fontFamily: "Arial Black",
             color: "#ffffff",
-            fontStyle: "bold"
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+            stroke: "#000000",
+            strokeThickness: 4
+        }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
 
         this.nameText.on("pointerdown", () => this.showRenameUI());
-        // Rename button (🖋️ icon with black square background)
-        this.renameBtn = this.add.text(centerX + 140, 200, "🖋️", {
-            fontSize: "28px",
-            backgroundColor: "#000000",
-            color: "#ffffff",
-            padding: { x: 10, y: 6 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        // Rename button
+        this.renameBtn = this.add.circle(centerX + 180, 150, 25, 0x444444, 0.9)
+            .setStrokeStyle(2, 0xffffff)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(11);
+
+        this.add.text(centerX + 180, 150, "✏️", {
+            fontSize: "20px"
+        }).setOrigin(0.5).setDepth(12);
 
         this.renameBtn.on("pointerdown", () => this.showRenameUI());
 
+        // Level and Growth Stage Display
+        const levelText = this.add.text(centerX, 210, `Level ${this.data.level} • ${this.data.growthStage.toUpperCase()}`, {
+            fontSize: "24px",
+            fontFamily: "Arial",
+            color: "#ffff00",
+            stroke: "#000000",
+            strokeThickness: 2
+        }).setOrigin(0.5).setDepth(11);
 
-
-
-
+        // Stat Bars - Better positioned at bottom
+        const barY = 1050;
         this.bars = {
-            hunger: this.createBar("Hunger", centerX - 230, 1090, 0x00cc66, this.data.hunger),
-            energy: this.createBar("Health", centerX + 120, 1090, 0xffcc00, this.data.energy)
+            hunger: this.createBar("Hunger", centerX - 200, barY, 0x00cc66, this.data.hunger),
+            water: this.createBar("Water", centerX, barY, 0x0099ff, this.data.water),
+            energy: this.createBar("Health", centerX + 200, barY, 0xffcc00, this.data.energy)
         };
 
+        // Happiness Thermometer - Left side, better positioned
+        this.happinessBarX = 50;
+        this.happinessBarY = 500;
+        this.happinessBarWidth = 50;
+        this.happinessBarHeight = 350;
 
-        this.happinessBarX = 60;
-        this.happinessBarY = 640;
-        this.happinessBarWidth = 40;
-        this.happinessBarHeight = 400;
+        // Happiness Thermometer Background
+        this.happinessBg = this.add.rectangle(
+            this.happinessBarX,
+            this.happinessBarY,
+            this.happinessBarWidth + 20,
+            this.happinessBarHeight + 40,
+            0x222222,
+            0.9
+        ).setStrokeStyle(4, 0xffffff)
+        .setOrigin(0.5).setDepth(4);
+
+        // Label above thermometer
+        this.add.text(this.happinessBarX, this.happinessBarY - this.happinessBarHeight / 2 - 30, "HAPPINESS", {
+            fontSize: "20px",
+            fontFamily: "Arial Black",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 2
+        }).setOrigin(0.5).setDepth(10);
 
         this.happinessBar = this.add.image(this.happinessBarX, this.happinessBarY, "happiness_gradient")
             .setOrigin(0.5)
             .setDisplaySize(this.happinessBarHeight, this.happinessBarWidth)
-            .setAngle(90) // rotates horizontal gradient to vertical
+            .setAngle(90)
             .setDepth(5);
-
-
 
         this.happinessOverlay = this.add.rectangle(
             this.happinessBarX,
@@ -116,30 +160,34 @@ class HomeScreen extends Phaser.Scene {
             this.happinessBarWidth,
             this.happinessBarHeight,
             0x000000,
-            0.4 // Adjust opacity here (0 = transparent, 1 = solid)
+            0.3
         ).setOrigin(0.5).setDepth(6);
-
-
+        
         this.happinessFace = this.add.image(
             this.happinessBarX,
             this.getHappinessY(this.data.happiness),
             "smile1"
-        ).setOrigin(0.5).setDisplaySize(70, 65).setDepth(10);
+        ).setOrigin(0.5).setDisplaySize(60, 55).setDepth(10);
+
         this.happinessText = this.add.text(
             this.happinessBarX,
-            this.happinessBarY + this.happinessBarHeight / 2 + 30,
+            this.happinessBarY + this.happinessBarHeight / 2 + 25,
             `${this.data.happiness}/100`,
             {
-                fontSize: "28px",
+                fontSize: "24px",
                 fontFamily: "Arial Black",
                 color: "#ffffff",
                 stroke: "#000000",
                 strokeThickness: 3
             }
         ).setOrigin(0.5).setDepth(10);
+        
+        // Update happiness color based on value
+        this.updateHappinessColor(this.data.happiness);
 
 
 
+        // Create animations
         if (!this.anims.exists("dog_idle")) {
             this.anims.create({
                 key: "dog_idle",
@@ -158,152 +206,184 @@ class HomeScreen extends Phaser.Scene {
             });
         }
 
+        // Load pet sprite
         this.loadPet();
 
-        // Smelly Overlay (using the image you mentioned)
-        // Calculate scale based on pet type (matching your loadPet logic)
+        this.loadPet();
+
+        // Smelly Overlay
         const isCat = this.data.type === "cat";
         const petScale = isCat ? 0.85 : 0.7;
 
         this.smellyOverlay = this.add.image(this.petSprite.x, this.petSprite.y, "smelly_overlay")
             .setDepth(this.petSprite.depth + 0.5)
             .setAlpha(1.8)
-            .setScale(0.3) // This makes it the same size as the pet
+            .setScale(0.3)
             .setVisible(false);
 
-        // Emoji Text Icons
-        this.poopIcon = this.add.text(this.petSprite.x + 150, this.petSprite.y - 50, "💩", { fontSize: "64px" }).setVisible(false);
-        this.sickIcon = this.add.text(this.petSprite.x + 150, this.petSprite.y + 50, "🤮", { fontSize: "64px" }).setVisible(false);
+        // Status Icons - Better positioned
+        this.poopIcon = this.add.text(this.petSprite.x + 120, this.petSprite.y - 80, "💩", { 
+            fontSize: "56px",
+            stroke: "#000000",
+            strokeThickness: 3
+        }).setVisible(false).setDepth(20);
+        
+        this.sickIcon = this.add.text(this.petSprite.x + 120, this.petSprite.y + 80, "🤮", { 
+            fontSize: "56px",
+            stroke: "#000000",
+            strokeThickness: 3
+        }).setVisible(false).setDepth(20);
 
         // Listener for the event emitted by TimeManager
         this.game.events.on("tasks-updated", this.refreshTaskVisuals, this);
 
-        const buttonY = 1180;
+        // Action Buttons - Organized in a clean grid
+        const buttonStartY = 1120;
+        const buttonSpacing = 130;
+        const buttonSize = 100;
+        const buttonRadius = 15;
 
-        const sleepBtn = this.add.container(centerX - 300, buttonY);
-        const sleepIcon = this.add.text(0, 0, "🛏️", {
-            fontSize: "48px"
-        }).setOrigin(0.5);
-        const sleepLabel = this.add.text(0, 50, "Sleep", {
-            fontSize: "24px",
-            fontStyle: "bold",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-        sleepBtn.add([sleepIcon, sleepLabel]);
-        sleepBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
-        sleepBtn.on("pointerdown", () => this.scene.start("SleepScreen"));
+        // Row 1: Primary Actions
+        const createActionButton = (x, y, emoji, label, action, color = 0x4a90e2) => {
+            const btnBg = this.add.rectangle(x, y, buttonSize, buttonSize, color, 0.9)
+                .setStrokeStyle(3, 0xffffff)
+                .setInteractive({ useHandCursor: true })
+                .setDepth(10);
 
-        // Food Button with 🍖 emoji
-        const foodBtn = this.add.container(centerX - 150, buttonY);
-        const foodIcon = this.add.text(0, 0, "🍖", {
-            fontSize: "48px"
-        }).setOrigin(0.5);
-        const foodLabel = this.add.text(0, 50, "Food", {
-            fontSize: "24px",
-            fontStyle: "bold",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-        foodBtn.add([foodIcon, foodLabel]);
-        foodBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
-        foodBtn.on("pointerdown", () => {
+            const btnIcon = this.add.text(x, y - 15, emoji, {
+                fontSize: "44px"
+            }).setOrigin(0.5).setDepth(11);
+
+            const btnLabel = this.add.text(x, y + 30, label, {
+                fontSize: "18px",
+                fontFamily: "Arial Black",
+                color: "#ffffff",
+                stroke: "#000000",
+                strokeThickness: 2
+            }).setOrigin(0.5).setDepth(11);
+
+            btnBg.on("pointerdown", action);
+            btnBg.on("pointerover", () => btnBg.setFillStyle(color, 1));
+            btnBg.on("pointerout", () => btnBg.setFillStyle(color, 0.9));
+
+            return { bg: btnBg, icon: btnIcon, label: btnLabel };
+        };
+
+        // Row 1: Feed, Play, Shop
+        createActionButton(centerX - buttonSpacing, buttonStartY, "🍖", "Feed", () => {
             if (this.foodPopup) return;
             this.time.delayedCall(100, () => this.showFoodPopup());
-        });
+        }, 0xff6b6b);
 
-        // Shop Button with 🏪 emoji
-        const shopBtn = this.add.container(centerX + 150, buttonY);
-        const shopIcon = this.add.text(0, 0, "🏪", {
-            fontSize: "48px"
-        }).setOrigin(0.5);
-        const shopLabel = this.add.text(0, 50, "Shop", {
-            fontSize: "24px",
-            fontStyle: "bold",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-        shopBtn.add([shopIcon, shopLabel]);
-        shopBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
-        shopBtn.on("pointerdown", () => this.scene.start("ShopScreen"));
+        createActionButton(centerX, buttonStartY, "🎾", "Play", () => {
+            if (this.scene.get("PlayScreen")) {
+                this.scene.start("PlayScreen");
+            } else {
+                this.setBarValue("happiness", this.data.happiness + 10);
+                GameData.addXP(this.data, 5);
+            }
+        }, 0x4ecdc4);
 
-        const vetBtn = this.add.container(centerX, buttonY);
-        const vetIcon = this.add.text(0, 0, "🏥", {
-            fontSize: "48px"
-        }).setOrigin(0.5);
-        const vetLabel = this.add.text(0, 50, "Vet", {
-            fontSize: "24px",
-            fontStyle: "bold",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-        vetBtn.add([vetIcon, vetLabel]);
-        vetBtn.setSize(80, 100).setInteractive({ useHandCursor: true });
-        vetBtn.on("pointerdown", () => this.scene.start("VetScreen"));
+        createActionButton(centerX + buttonSpacing, buttonStartY, "🛒", "Shop", () => {
+            this.scene.start("ShopScreen");
+        }, 0xffd93d);
 
-        // Paw Print Button (next to Shop)
-        const pawBtn = this.add.container(centerX + 300, buttonY); // adjust position as needed
-        const pawIcon = this.add.text(0, 0, "🐾", {
-            fontSize: "48px",
-            fontFamily: "Arial"
-        }).setOrigin(0.5);
-        const pawLabel = this.add.text(0, 50, "Pets", {
-            fontSize: "24px",
-            fontFamily: "Arial Black",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-        pawBtn.add([pawIcon, pawLabel]);
-        pawBtn.setSize(100, 100).setInteractive({ useHandCursor: true });
-        pawBtn.on("pointerdown", () => this.showPetSwitcher());
+        // Row 2: Care Actions
+        const buttonY2 = buttonStartY + 110;
+        createActionButton(centerX - buttonSpacing, buttonY2, "💤", "Rest", () => {
+            this.scene.start("SleepScreen");
+        }, 0x95a5a6);
+
+        createActionButton(centerX, buttonY2, "🛁", "Bath", () => {
+            if (this.scene.get("BathingScreen")) {
+                this.scene.start("BathingScreen");
+            } else {
+                if (this.data.cleanliness !== undefined) {
+                    this.setBarValue("cleanliness", Math.min(100, this.data.cleanliness + 30));
+                }
+            }
+        }, 0x3498db);
+
+        createActionButton(centerX + buttonSpacing, buttonY2, "🏥", "Vet", () => {
+            this.scene.start("VetScreen");
+        }, 0xe74c3c);
+
+        // Row 3: Utility Actions
+        const buttonY3 = buttonY2 + 110;
+        createActionButton(centerX - buttonSpacing, buttonY3, "📊", "Stats", () => {
+            if (this.scene.get("StatsScreen")) {
+                this.scene.start("StatsScreen");
+            }
+        }, 0x9b59b6);
+
+        createActionButton(centerX, buttonY3, "🎨", "Style", () => {
+            if (this.scene.get("CustomizationScreen")) {
+                this.scene.start("CustomizationScreen");
+            }
+        }, 0xe67e22);
+
+        createActionButton(centerX + buttonSpacing, buttonY3, "🐾", "Pets", () => {
+            this.showPetSwitcher();
+        }, 0x1abc9c);
 
 
-        foodBtn.on("pointerdown", () => {
-            if (this.foodPopup) return;
-            this.time.delayedCall(100, () => this.showFoodPopup());
-        });
-
-        shopBtn.on("pointerdown", () => this.scene.start("ShopScreen"));
         // Decrease stats over time
         this.time.addEvent({
             delay: 6000, // every 6 seconds
             loop: true,
             callback: () => {
                 this.setBarValue("hunger", this.data.hunger - 2);
+                this.setBarValue("water", this.data.water - 1.5);
                 this.setBarValue("energy", this.data.energy - 1.5);
                 this.setBarValue("happiness", this.data.happiness - 1);
+                // Cleanliness decreases slowly
+                if (this.data.cleanliness !== undefined) {
+                    this.setBarValue("cleanliness", Math.max(0, this.data.cleanliness - 0.5));
+                }
             }
-
         });
 
     }
     createBar(label, x, y, color, percent) {
-        const barWidth = 180;
-        const barHeight = 28;
-        const radius = 14;
+        const barWidth = 200;
+        const barHeight = 32;
+        const radius = 16;
+
+        // Container background for better visibility
+        const containerBg = this.add.rectangle(x, y, barWidth + 20, barHeight + 20, 0x000000, 0.5)
+            .setStrokeStyle(2, 0xffffff)
+            .setOrigin(0.5)
+            .setDepth(1);
 
         // Label
-        this.add.text(x - barWidth / 2, y - 36, label, {
-            fontSize: "27px",
+        this.add.text(x, y - 30, label, {
+            fontSize: "22px",
             fontFamily: "Arial Black",
             color: "#ffffff",
-            stroke: "#100000",
+            stroke: "#000000",
             strokeThickness: 3
-        }).setOrigin(-0.4, 0.5);
+        }).setOrigin(0.5).setDepth(2);
 
-        // Background
-        const bg = this.add.graphics().setDepth(1);
-        bg.fillStyle(0x733333, 1);
+        // Background bar
+        const bg = this.add.graphics().setDepth(2);
+        bg.fillStyle(0x333333, 1);
         bg.fillRoundedRect(x - barWidth / 2, y - barHeight / 2, barWidth, barHeight, radius);
+        bg.lineStyle(2, 0xffffff, 1);
+        bg.strokeRoundedRect(x - barWidth / 2, y - barHeight / 2, barWidth, barHeight, radius);
 
-        // Fill
-        const fill = this.add.graphics().setDepth(2);
+        // Fill bar
+        const fill = this.add.graphics().setDepth(3);
         fill.fillStyle(color, 1);
         fill.fillRoundedRect(x - barWidth / 2, y - barHeight / 2, (barWidth * percent) / 100, barHeight, radius);
 
         // Value text
-        const valueText = this.add.text(x + barWidth / 2 + 12, y, `${Math.round(percent)}/100`, {
-            fontSize: "28px",
+        const valueText = this.add.text(x, y, `${Math.round(percent)}/100`, {
+            fontSize: "20px",
             fontFamily: "Arial Black",
-            color: "#fff3ff",
-            stroke: "#800000",
-            strokeThickness: 2
-        }).setOrigin(0, 0.5).setDepth(3);
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(4);
 
         return {
             bg,
@@ -313,7 +393,8 @@ class HomeScreen extends Phaser.Scene {
             width: barWidth,
             height: barHeight,
             x,
-            bgY: y
+            bgY: y,
+            containerBg
         };
     }
 
@@ -387,7 +468,8 @@ class HomeScreen extends Phaser.Scene {
             elements.push(box, nameText, typeText, switchBtn, removeBtn);
         });
 
-        if (pets.length < 2) {
+        // Check if can add more pets
+        if (pets.length < GameData.maxPetSlots) {
             const addBtn = scene.add.text(360, 620, "Add Pet", {
                 fontSize: "28px",
                 fontFamily: "Arial Black",
@@ -402,7 +484,39 @@ class HomeScreen extends Phaser.Scene {
             });
 
             elements.push(addBtn);
+        } else if (GameData.maxPetSlots < 5) {
+            // Show buy slot option
+            const buySlotBtn = scene.add.text(360, 620, "Buy Pet Slot (25 💎)", {
+                fontSize: "24px",
+                fontFamily: "Arial Black",
+                color: "#ffff00",
+                backgroundColor: "#000",
+                padding: { x: 20, y: 10 }
+            }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
+
+            buySlotBtn.on("pointerdown", () => {
+                [overlay, panel, title, buySlotBtn, ...elements].forEach(el => el.destroy());
+                scene.scene.start("PetPurchaseScreen");
+            });
+
+            elements.push(buySlotBtn);
         }
+
+        // Always show "Buy Pets" button
+        const buyPetsBtn = scene.add.text(360, 680, "Buy New Pets", {
+            fontSize: "26px",
+            fontFamily: "Arial Black",
+            color: "#00ccff",
+            backgroundColor: "#000",
+            padding: { x: 20, y: 10 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
+
+        buyPetsBtn.on("pointerdown", () => {
+            [overlay, panel, title, buyPetsBtn, ...elements].forEach(el => el.destroy());
+            scene.scene.start("PetPurchaseScreen");
+        });
+
+        elements.push(buyPetsBtn);
 
         const closeBtn = scene.add.text(360, 700, "Close", {
             fontSize: "28px",
@@ -463,7 +577,7 @@ class HomeScreen extends Phaser.Scene {
                 scene.loadPet(); // This will trigger the animation refresh
                 closeUI();
             } else {
-                alert("You can only have up to 2 pets.");
+                alert(`You can only have up to ${GameData.maxPetSlots} pets. Buy more slots in the Pet Store!`);
             }
         });
 
@@ -471,8 +585,34 @@ class HomeScreen extends Phaser.Scene {
     }
     updateStatBars(pet) {
         this.setBarValue("hunger", pet.hunger);
+        this.setBarValue("water", pet.water);
         this.setBarValue("energy", pet.energy);
         this.setBarValue("happiness", pet.happiness);
+    }
+
+    updateHappinessColor(happiness) {
+        let color, emoji;
+        if (happiness >= 70) {
+            color = 0x00ff00; // Green
+            emoji = "😊";
+        } else if (happiness >= 40) {
+            color = 0xffff00; // Yellow
+            emoji = "😐";
+        } else {
+            color = 0xff0000; // Red
+            emoji = "😞";
+        }
+        
+        // Update thermometer background color
+        if (this.happinessBg) {
+            this.happinessBg.setFillStyle(color, 0.3);
+        }
+        
+        // Update face emoji based on happiness
+        const index = Math.min(4, Math.floor((100 - happiness) / 20));
+        if (this.happinessFace) {
+            this.happinessFace.setTexture(`smile${index + 1}`);
+        }
     }
 
 
@@ -598,6 +738,13 @@ class HomeScreen extends Phaser.Scene {
             this.happinessOverlay.setDisplaySize(this.happinessBarWidth, overlayHeight);
             this.happinessOverlay.setPosition(this.happinessBarX, overlayTop + overlayHeight / 2);
             this.happinessText.setText(`${Math.round(clamped)}/100`);
+            
+            // Update color based on happiness
+            this.updateHappinessColor(clamped);
+        } else if (type === "cleanliness") {
+            // Cleanliness is not a bar, but we track it
+            this.data.cleanliness = clamped;
+            GameData.save();
         } else {
             const bar = this.bars[type];
             if (!bar) return;
@@ -609,7 +756,7 @@ class HomeScreen extends Phaser.Scene {
                 bar.bgY - bar.height / 2,
                 (bar.width * clamped) / 100,
                 bar.height,
-                14
+                16
             );
 
             bar.valueText.setText(`${Math.round(clamped)}/100`);
@@ -710,40 +857,72 @@ class HomeScreen extends Phaser.Scene {
     showFoodPopup() {
         if (this.foodPopup) return;
 
-        const popupBg = this.add.rectangle(390, 800, 520, 420, 0x000000, 0.85).setOrigin(0.5);
-        const border = this.add.rectangle(390, 800, 520, 420).setStrokeStyle(4, 0xffffff).setOrigin(0.5);
+        const popupBg = this.add.rectangle(360, 640, 600, 700, 0x000000, 0.92)
+            .setOrigin(0.5)
+            .setDepth(50)
+            .setStrokeStyle(4, 0xffffff);
+        
+        const border = this.add.rectangle(360, 640, 600, 700)
+            .setStrokeStyle(4, 0x00ccff)
+            .setOrigin(0.5)
+            .setDepth(51);
+
+        const title = this.add.text(360, 350, "Feed & Water", {
+            fontSize: "42px",
+            fontFamily: "Arial Black",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 4
+        }).setOrigin(0.5).setDepth(52);
 
         const foods = [
-            { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger" },
-            { key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger" },
-            { key: "apple", label: "Apple", restore: 10, desc: "Restores 10 hunger" },
-            { key: "fish", label: "Fish", restore: 15, desc: "Restores 15 hunger" }
+            { key: "pizza", label: "Pizza", restore: 20, desc: "Restores 20 hunger", icon: "🍕" },
+            { key: "meat", label: "Meat", restore: 30, desc: "Restores 30 hunger", icon: "🍖" },
+            { key: "apple", label: "Apple", restore: 10, desc: "Restores 10 hunger", icon: "🍎" },
+            { key: "fish", label: "Fish", restore: 15, desc: "Restores 15 hunger", icon: "🐟" },
+            { key: "water", label: "Water", restore: 25, desc: "Restores 25 water", icon: "💧", stat: "water" }
         ];
 
 
         const buttons = [];
-        const visibleFoods = foods.filter(f => GameData.inventory[f.key] > 0);
+        const visibleFoods = foods.filter(f => {
+            const hasItem = GameData.inventory[f.key] > 0;
+            // Water is always available (can give tap water)
+            return hasItem || f.key === "water";
+        });
 
 
         const tooltip = this.add.text(0, 0, "", {
-            fontSize: "24px",
+            fontSize: "22px",
+            fontFamily: "Arial",
             color: "#ffffff",
             backgroundColor: "#000000",
-            padding: { x: 10, y: 6 }
+            padding: { x: 12, y: 8 },
+            stroke: "#000000",
+            strokeThickness: 2
         }).setDepth(1000).setVisible(false);
 
         if (visibleFoods.length === 0) {
-            const noFoodText = this.add.text(390, 780, "No food left!", {
-                fontSize: "32px",
-                color: "#ffffff"
-            }).setOrigin(0.5);
+            const noFoodText = this.add.text(360, 500, "No food left!", {
+                fontSize: "36px",
+                fontFamily: "Arial Black",
+                color: "#ff4444",
+                stroke: "#000000",
+                strokeThickness: 3
+            }).setOrigin(0.5).setDepth(52);
 
-            const shopBtn = this.add.text(390, 840, "Go to Shop", {
-                fontSize: "32px",
-                color: "#00ffcc",
-                backgroundColor: "#222",
-                padding: { x: 20, y: 10 }
-            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+            const shopBtn = this.add.rectangle(360, 600, 200, 60, 0x00ccff, 0.9)
+                .setStrokeStyle(3, 0xffffff)
+                .setInteractive({ useHandCursor: true })
+                .setDepth(52);
+
+            this.add.text(360, 600, "Go to Shop", {
+                fontSize: "28px",
+                fontFamily: "Arial Black",
+                color: "#ffffff",
+                stroke: "#000000",
+                strokeThickness: 2
+            }).setOrigin(0.5).setDepth(53);
 
             shopBtn.on("pointerdown", () => {
                 this.closeFoodPopup();
@@ -752,46 +931,91 @@ class HomeScreen extends Phaser.Scene {
 
             buttons.push(noFoodText, shopBtn);
         } else {
+            const startX = 360 - (visibleFoods.length - 1) * 80;
             visibleFoods.forEach((food, i) => {
-                const x = 200 + i * 160;
-                const y = 640;
+                const x = startX + i * 160;
+                const y = 500;
 
-                const icon = this.add.image(x, y, food.key).setScale(0.4).setInteractive({ useHandCursor: true });
-                const qty = this.add.text(x, y + 70, `x${GameData.inventory[food.key]}`, {
+                // Food item container
+                const itemBg = this.add.rectangle(x, y, 120, 140, 0x333333, 0.8)
+                    .setStrokeStyle(2, 0xffffff)
+                    .setInteractive({ useHandCursor: true })
+                    .setDepth(52);
 
-                    fontSize: "24px",
-                    color: "#ffff66"
-                }).setOrigin(0.5);
+                // Use emoji if available, otherwise image
+                let icon;
+                if (food.icon) {
+                    icon = this.add.text(x, y - 20, food.icon, {
+                        fontSize: "64px"
+                    }).setOrigin(0.5).setDepth(53);
+                } else {
+                    icon = this.add.image(x, y - 20, food.key)
+                        .setScale(0.5)
+                        .setDepth(53);
+                }
+                
+                const qtyText = food.key === "water" ? "∞" : `x${GameData.inventory[food.key] || 0}`;
+                const qty = this.add.text(x, y + 40, qtyText, {
+                    fontSize: "20px",
+                    fontFamily: "Arial Black",
+                    color: "#ffff00",
+                    stroke: "#000000",
+                    strokeThickness: 2
+                }).setOrigin(0.5).setDepth(53);
 
-                icon.on("pointerover", () => {
+                itemBg.on("pointerover", () => {
+                    itemBg.setFillStyle(0x444444, 0.9);
                     tooltip.setText(food.desc);
-                    tooltip.setPosition(x, y - 100);
+                    tooltip.setPosition(x, y - 80);
                     tooltip.setVisible(true);
                 });
 
-                icon.on("pointerout", () => {
+                itemBg.on("pointerout", () => {
+                    itemBg.setFillStyle(0x333333, 0.8);
                     tooltip.setVisible(false);
                 });
 
-                icon.on("pointerdown", () => {
+                itemBg.on("pointerdown", () => {
                     this.petSprite.setScale(1.3);
                     this.time.delayedCall(200, () => {
-                        this.petSprite.setScale(1.2);
+                        const isCat = this.data.type === "cat";
+                        this.petSprite.setScale(isCat ? 1.25 : 1.0);
                     });
 
-                    GameData.inventory[food.key]--;
-                    this.setBarValue("hunger", this.data.hunger + food.restore);
+                    // Water is free (tap water), others consume inventory
+                    if (food.key !== "water") {
+                        if (GameData.inventory[food.key] <= 0) return;
+                        GameData.inventory[food.key]--;
+                    }
+                    
+                    const stat = food.stat || "hunger";
+                    this.setBarValue(stat, this.data[stat] + food.restore);
+                    GameData.addXP(this.data, 2);
                     GameData.save();
                     this.closeFoodPopup();
                 });
 
-                buttons.push(icon, qty);
+                buttons.push(itemBg, icon, qty);
             });
 
             buttons.push(tooltip);
         }
 
-        this.foodPopup = [popupBg, border, ...buttons];
+        // Close button
+        const closeBtn = this.add.rectangle(360, 950, 150, 50, 0x666666, 0.9)
+            .setStrokeStyle(2, 0xffffff)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(52);
+
+        this.add.text(360, 950, "Close", {
+            fontSize: "24px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0.5).setDepth(53);
+
+        closeBtn.on("pointerdown", () => this.closeFoodPopup());
+
+        this.foodPopup = [popupBg, border, title, closeBtn, ...buttons];
     }
 
     closeFoodPopup() {
