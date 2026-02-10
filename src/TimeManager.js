@@ -22,7 +22,7 @@ class TimeManager extends Phaser.Scene {
     startTaskLoops() {
         // Bathroom and Shower Loop (15 seconds)
         this.time.addEvent({
-            delay: 15,
+            delay: 15000,
             loop: true,
             callback: () => {
                 const pet = GameData.getActivePet();
@@ -39,7 +39,7 @@ class TimeManager extends Phaser.Scene {
 
         // Sickness Loop (45 seconds)
         this.time.addEvent({
-            delay: 45,
+            delay: 45000,
             loop: true,
             callback: () => {
                 const pet = GameData.getActivePet();
