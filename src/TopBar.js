@@ -85,8 +85,8 @@ class TopBar {
 
     updateCounters(newData) {
         if (!newData) return;
-        this.animateText(this.coinText, parseInt(this.coinText.text), newData.coins);
-        this.animateText(this.gemText, parseInt(this.gemText.text), newData.gems);
+        if (newData.coins !== undefined) this.animateText(this.coinText, parseInt(this.coinText.text), newData.coins);
+        if (newData.gems !== undefined) this.animateText(this.gemText, parseInt(this.gemText.text), newData.gems);
     }
 
 
@@ -241,7 +241,7 @@ class TopBar {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(72);
 
         okBtn.on("pointerdown", () => {
-            const coinField = coinInput.getChildByProperty("id", "coinInput");
+            const coinField = coinInput.getChildByID("coinInput");
             const gemField = gemInput.getChildByProperty("id", "gemInput");
 
             if (!coinField || !gemField) {

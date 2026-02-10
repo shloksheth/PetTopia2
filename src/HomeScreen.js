@@ -753,7 +753,7 @@ class HomeScreen extends Phaser.Scene {
                 icon.on("pointerdown", () => {
                     this.petSprite.setScale(1.3);
                     this.time.delayedCall(200, () => {
-                        this.pet.setScale(1.2);
+                        this.petSprite.setScale(1.2);
                     });
 
                     GameData.inventory[food.key]--;
