@@ -20,6 +20,7 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("smile5", "assets/icons/smile5.png");
         this.load.image("HomeScreenDay", "assets/backgrounds/HomeScreenDay.png");
         this.load.image("HomeScreenNight", "assets/backgrounds/HomeScreenNight.png");
+        this.load.image("smelly_overlay", "assets/icons/smelly.png");
 
 
         for (let i = 1; i <= 8; i++) {
@@ -159,6 +160,23 @@ class HomeScreen extends Phaser.Scene {
 
         this.loadPet();
 
+        // Smelly Overlay (using the image you mentioned)
+        // Calculate scale based on pet type (matching your loadPet logic)
+        const isCat = this.data.type === "cat";
+        const petScale = isCat ? 0.85 : 0.7;
+
+        this.smellyOverlay = this.add.image(this.petSprite.x, this.petSprite.y, "smelly_overlay")
+            .setDepth(this.petSprite.depth + 0.5)
+            .setAlpha(1.8)
+            .setScale(0.3) // This makes it the same size as the pet
+            .setVisible(false);
+
+        // Emoji Text Icons
+        this.poopIcon = this.add.text(this.petSprite.x + 150, this.petSprite.y - 50, "💩", { fontSize: "64px" }).setVisible(false);
+        this.sickIcon = this.add.text(this.petSprite.x + 150, this.petSprite.y + 50, "🤮", { fontSize: "64px" }).setVisible(false);
+
+        // Listener for the event emitted by TimeManager
+        this.game.events.on("tasks-updated", this.refreshTaskVisuals, this);
 
         const buttonY = 1180;
 
@@ -615,7 +633,12 @@ class HomeScreen extends Phaser.Scene {
         this.background.setTexture(bgKey);
     }
 
-
+    refreshTaskVisuals() {
+        const pet = GameData.getActivePet();
+        this.smellyOverlay.setVisible(pet.isDirty);
+        this.poopIcon.setVisible(pet.needsBathroom);
+        this.sickIcon.setVisible(pet.isSick);
+    }
 
 
     showRenameUI() {
