@@ -14,6 +14,14 @@ class VetScreen extends Phaser.Scene {
     }
 
     create() {
+                    // Set bottom bar color for vet screen (orange) before UIScene
+                    this.registry.set('bottomBarColor', 0xFF9000);
+                    if (!this.scene.isActive('UIScene')) {
+                        this.scene.launch('UIScene');
+                    }
+                    this.scene.bringToTop('UIScene');
+            // Set bottom bar color for vet screen (orange)
+            this.registry.set('bottomBarColor', 0xFF9000);
         const topBarHeight = 77;
         const petData = GameData.getActivePet(); 
         const isCat = petData.type === "cat";

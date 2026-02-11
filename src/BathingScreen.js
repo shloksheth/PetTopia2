@@ -5,7 +5,8 @@ class BathingScreen extends Phaser.Scene {
 
     preload() {
         if (!this.textures.exists("button")) this.load.image("button", "assets/icons/button.png");
-        this.load.image("HomeScreenDay", "assets/backgrounds/HomeScreenDay.png");
+        this.load.image("BathroomScreenDay", "assets/backgrounds/bathroom_day_bg.png");
+        this.load.image("BathroomScreenNight", "assets/backgrounds/bathroom_night_bg.png");
 
         for (let i = 1; i <= 8; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
@@ -15,17 +16,23 @@ class BathingScreen extends Phaser.Scene {
 
     create() {
         GameData.load();
-        // In BathingScreen.js create()
-        // Change this:
-        const petclean = this.petData.cleanliness = Math.min(100, this.petData.cleanliness + amount);
+        // Choose background and set bottom bar color
+        const bgKey = GameData.isNightTime() ? "BathroomScreenNight" : "BathroomScreenDay";
+        const dayBarColor = 0xe6c17a;
+        const nightBarColor = 0x1a237e;
+        this.registry.set('bottomBarColor', bgKey === "BathroomScreenDay" ? dayBarColor : nightBarColor);
+        // --- Ensure UIScene is running and on top (for header/footer) ---
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
+
         this.petData = GameData.getActivePet();
-        const isCat = pet.type === "cat";
+        const isCat = this.petData.type === "cat";
         const spriteKey = isCat ? 'idle_cat1' : 'idle1';
 
-        this.pet = this.add.sprite(360, 500, spriteKey);
-        // ... setup animations based on isCat ...
-        // Background
-        const bg = this.add.image(360, 640, "HomeScreenDay").setOrigin(0.5);
+        // Set background
+        const bg = this.add.image(360, 640, bgKey).setOrigin(0.5);
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
         // Title
@@ -58,7 +65,7 @@ class BathingScreen extends Phaser.Scene {
             });
         }
 
-        this.pet = this.add.sprite(360, 500, spriteKey);
+        this.pet = this.add.sprite(360, 420, spriteKey);
         if (isCat) {
             this.pet.setScale(1.2);
         } else {
@@ -67,7 +74,7 @@ class BathingScreen extends Phaser.Scene {
         this.pet.play(animKey);
 
         // Cleanliness display
-        const cleanliness = petclean !== undefined ? petclean : 100;
+        const cleanliness = this.petData.cleanliness !== undefined ? this.petData.cleanliness : 100;
         this.cleanlinessText = this.add.text(360, 200, `Cleanliness: ${Math.round(cleanliness)}/100`, {
             fontSize: "32px",
             fontFamily: "Arial Black",
@@ -131,27 +138,16 @@ class BathingScreen extends Phaser.Scene {
             }
         });
 
-        // Back button
-        const backBtn = this.add.image(360, 1150, "button")
-            .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5);
-
-        this.add.text(360, 1150, "Back", {
-            fontSize: "32px",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-
-        backBtn.on("pointerdown", () => {
-            this.scene.start("HomeScreen");
-        });
+        // Back button removed
     }
 
     performAction(action, amount) {
         const pet = GameData.getActivePet();
-        if (!petclean) petclean = 100;
+        let cleanliness = pet.cleanliness || 100;
 
-        const oldValue = petclean;
-        petclean = Math.min(100, petclean + amount);
+        const oldValue = cleanliness;
+        cleanliness = Math.min(100, cleanliness + amount);
+        pet.cleanliness = cleanliness;
         pet.isDirty = false;
 
         // Animate pet
@@ -164,7 +160,7 @@ class BathingScreen extends Phaser.Scene {
         });
 
         // Update display
-        this.cleanlinessText.setText(`Cleanliness: ${Math.round(petclean)}/100`);
+        this.cleanlinessText.setText(`Cleanliness: ${Math.round(cleanliness)}/100`);
 
         // Add sparkles effect
         for (let i = 0; i < 5; i++) {

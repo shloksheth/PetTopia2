@@ -19,11 +19,17 @@ class ShopScreen extends Phaser.Scene {
         // Supplies Assets (Check paths if these exist)
         //this.load.image("soap", "assets/ui/soap.png");
        // this.load.image("medicine", "assets/ui/medicine.png");
-       // this.load.image("toilet_paper", "assets/ui/toilet_paper.png");
+       // this.load.image("toilet_paper", "assets/ui/toilet_paper.png"); 
     }
 
     create() {
 
+        // Set bottom bar color for shop screen (medium orange) before UIScene
+        this.registry.set('bottomBarColor', 0xD87C20);
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
          // --- Ensure UIScene is running and on top (for header/footer) ---
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
@@ -102,14 +108,49 @@ class ShopScreen extends Phaser.Scene {
             this.createItemDisplay(this.getCurrentItems()[this.currentIndex]);
         });
 
-        // Navigation Arrows
-        // Left arrow (now points right)
-        this.add.image(120, 1050, "right_arrow").setScale(0.4).setInteractive({ useHandCursor: true })
-            .on("pointerdown", () => this.changeItem(-1));
 
-        // Right arrow (now points left)
-        this.add.image(600, 1050, "right_arrow").setFlipX(true).setScale(0.4).setInteractive({ useHandCursor: true })
-            .on("pointerdown", () => this.changeItem(1));
+        // Navigation Arrows with HomeScreen/UIScene hover effect
+        const leftArrow = this.add.image(120, 1050, "right_arrow").setScale(0.4).setInteractive({ useHandCursor: true });
+        leftArrow.on("pointerdown", () => this.changeItem(-1));
+        leftArrow.on("pointerover", () => {
+            this.tweens.add({
+                targets: leftArrow,
+                scale: 0.45,
+                y: leftArrow.y - 18,
+                duration: 180,
+                ease: 'Back.easeOut'
+            });
+        });
+        leftArrow.on("pointerout", () => {
+            this.tweens.add({
+                targets: leftArrow,
+                scale: 0.4,
+                y: 1050,
+                duration: 180,
+                ease: 'Back.easeIn'
+            });
+        });
+
+        const rightArrow = this.add.image(600, 1050, "right_arrow").setFlipX(true).setScale(0.4).setInteractive({ useHandCursor: true });
+        rightArrow.on("pointerdown", () => this.changeItem(1));
+        rightArrow.on("pointerover", () => {
+            this.tweens.add({
+                targets: rightArrow,
+                scale: 0.45,
+                y: rightArrow.y - 18,
+                duration: 180,
+                ease: 'Back.easeOut'
+            });
+        });
+        rightArrow.on("pointerout", () => {
+            this.tweens.add({
+                targets: rightArrow,
+                scale: 0.4,
+                y: 1050,
+                duration: 180,
+                ease: 'Back.easeIn'
+            });
+        });
 
         // Back button hidden (removed)
 

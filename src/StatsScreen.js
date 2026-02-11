@@ -10,6 +10,8 @@ class StatsScreen extends Phaser.Scene {
 
     create() {
         GameData.load();
+        // Set bottom bar color for stats screen (orange)
+        this.registry.set('bottomBarColor', 0xffa500);
         const stats = GameData.stats;
         const pet = GameData.getActivePet();
         const achievementMap = {

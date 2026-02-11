@@ -16,6 +16,12 @@ class PlayScreen extends Phaser.Scene {
 
     create() {
         GameData.load();
+        // Set bottom bar color for play screen (orange) before UIScene
+        this.registry.set('bottomBarColor', 0xFF9000);
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
         const pet = GameData.getActivePet();
         const isCat = pet.type === "cat";
 

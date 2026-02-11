@@ -1,6 +1,8 @@
 window.onload = function () {
     // Ensure GameData is loaded and has a default pet
     GameData.load();
+    // Set initial bottom bar color to orange for HomeScreen
+    window.localStorage.setItem('bottomBarColor', '0xffa500');
 
     const config = {
         type: Phaser.AUTO,

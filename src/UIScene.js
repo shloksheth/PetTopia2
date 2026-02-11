@@ -1,4 +1,18 @@
 class UIScene extends Phaser.Scene {
+        updateBottomBarColor() {
+            const { width, height } = this.scale;
+            const navBarHeight = 130;
+            const barColor = this.registry.get('bottomBarColor') || 0xFF9000;
+            if (this.navBg && this.navBg.destroy) this.navBg.destroy();
+            this.navBg = this.add.rectangle(
+                width / 2,
+                height - (navBarHeight / 2),
+                width,
+                navBarHeight,
+                barColor,
+                0.85
+            ).setOrigin(0.5).setDepth(1000).setInteractive();
+        }
     constructor() {
         super({ key: "UIScene", active: true });
     }
@@ -34,19 +48,16 @@ class UIScene extends Phaser.Scene {
 
     createBottomNav() {
         const { width, height } = this.scale;
-
-        const navBarHeight = 130; // Total height of the black area
+        const navBarHeight = 130;
+        const barColor = this.registry.get('bottomBarColor') || 0xFF9000;
         const navBg = this.add.rectangle(
             width / 2,
             height - (navBarHeight / 2),
             width,
             navBarHeight,
-            0x000000,
-            0.85 // 85% opacity
-        )
-            .setOrigin(0.5)
-            .setDepth(1000) // Lower than buttons (1001), but higher than other scenes
-            .setInteractive(); // Prevents clicking "through" the bar to the scene below
+            barColor,
+            0.85
+        ).setOrigin(0.5).setDepth(1000).setInteractive();
 
         // Add a thin white border line at the top of the bar for style
         this.add.line(0, 0, 0, height - navBarHeight, width, height - navBarHeight, 0xffffff, 8)

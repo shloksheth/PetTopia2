@@ -20,7 +20,7 @@ class HomeScreen extends Phaser.Scene {
         this.load.image("smelly_overlay", "assets/icons/smelly.png");
 
         // Load pet animations
-        for (let i = 1; i <= 8; i++) {
+        for (let i = 1; i <= 6; i++) {
             this.load.image("idle" + i, `assets/sprites/pets/idle dog animation/idle ${i}.png`);
             this.load.image('idle_cat' + i, `assets/sprites/pets/idle cat animation/idle ${i}.png`);
         }
@@ -29,6 +29,12 @@ class HomeScreen extends Phaser.Scene {
         const centerX = this.scale.width / 2;
         const margin = 30;
 
+        // Set bottom bar color for home screen (orange) before UIScene
+        this.registry.set('bottomBarColor', 0xFF9000);
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
         // --- Ensure UIScene is running and on top (for header/footer) ---
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
@@ -89,8 +95,6 @@ class HomeScreen extends Phaser.Scene {
 
         // Pet Name Section - Centered at top (use top area of usable screen)
         const nameY = this._topOffset + Math.round(Math.max(24, usableHeight * 0.06));
-
-
 
         this.nameText = this.add.text(centerX, nameY, this.data.name, {
             fontSize: "42px",
@@ -188,12 +192,12 @@ class HomeScreen extends Phaser.Scene {
 
 
 
-        // Create animations
+        // Create animations (slower frame rate)
         if (!this.anims.exists("dog_idle")) {
             this.anims.create({
                 key: "dog_idle",
                 frames: [...Array(8)].map((_, i) => ({ key: "idle" + (i + 1) })),
-                frameRate: 6,
+                frameRate: 4.5,
                 repeat: -1
             });
         }
@@ -202,7 +206,7 @@ class HomeScreen extends Phaser.Scene {
             this.anims.create({
                 key: "cat_idle",
                 frames: [...Array(8)].map((_, i) => ({ key: "idle_cat" + (i + 1) })),
-                frameRate: 6,
+                frameRate: 3,
                 repeat: -1
             });
         }
@@ -619,7 +623,10 @@ class HomeScreen extends Phaser.Scene {
         const animKey = isCat ? "cat_idle" : "dog_idle";
 
         const centerX = this.scale.width / 2;
-        const petY = this.petY || Math.round(this.scale.height * 0.6);
+        let petY = this.petY || Math.round(this.scale.height * 0.6);
+        if (!isCat) {
+            petY += 40; // Move dog sprite a little lower
+        }
         this.petSprite = this.add.sprite(centerX, petY, spriteKey);
 
         if (isCat) {
