@@ -64,17 +64,7 @@ class SleepScreen extends Phaser.Scene {
             }
         });
 
-        // Home button below Sleep/Wake
-        const homeBtn = this.add.text(this.scale.width / 2, 1145, "🏠 Home", {
-            fontSize: "80px",
-            padding: { x: 14, y: 6 },
-            color: "#ffffff"
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(10);
-
-        homeBtn.on("pointerdown", (p, x, y, e) => {
-            e.stopPropagation();
-            this.scene.start("HomeScreen");
-        });
+        // Home button hidden (removed)
 
         this.progressBg = this.add.rectangle(this.scale.width / 2, 900, 420, 22, 0x222222)
             .setOrigin(0.5)

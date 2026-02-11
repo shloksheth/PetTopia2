@@ -23,6 +23,23 @@ class ShopScreen extends Phaser.Scene {
     }
 
     create() {
+
+         // --- Ensure UIScene is running and on top (for header/footer) ---
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
+        
+        const centerX = this.scale.width / 2;
+        const margin = 30;
+
+        // Respect the persistent UI top and bottom bar heights (if provided by UIScene)
+        const bottomBarHeight = this.registry.get('bottomBarHeight') || Math.round(Math.max(64, this.scale.height * 0.10));
+        const topBarHeight = this.registry.get('topBarHeight') || 120;
+        const usableHeight = this.scale.height - bottomBarHeight - topBarHeight;
+        this._usableHeight = usableHeight; // save for use in loadPet
+        this._topOffset = topBarHeight;
+        
         GameData.load();
         this.data = GameData;
         this.currentIndex = 0;
@@ -86,16 +103,15 @@ class ShopScreen extends Phaser.Scene {
         });
 
         // Navigation Arrows
-        this.add.image(120, 1050, "right_arrow").setFlipX(true).setScale(0.4).setInteractive({ useHandCursor: true })
+        // Left arrow (now points right)
+        this.add.image(120, 1050, "right_arrow").setScale(0.4).setInteractive({ useHandCursor: true })
             .on("pointerdown", () => this.changeItem(-1));
 
-        this.add.image(600, 1050, "right_arrow").setScale(0.4).setInteractive({ useHandCursor: true })
+        // Right arrow (now points left)
+        this.add.image(600, 1050, "right_arrow").setFlipX(true).setScale(0.4).setInteractive({ useHandCursor: true })
             .on("pointerdown", () => this.changeItem(1));
 
-        // Back Button
-        const backBtn = this.add.image(360, 1180, "button").setInteractive({ useHandCursor: true });
-        this.add.text(360, 1180, "Back", { fontSize: "32px", color: "#ffffff" }).setOrigin(0.5);
-        backBtn.on("pointerdown", () => this.scene.start("HomeScreen"));
+        // Back button hidden (removed)
 
         // Initial Display
         this.createItemDisplay(this.getCurrentItems()[this.currentIndex]);

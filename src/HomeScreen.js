@@ -29,6 +29,12 @@ class HomeScreen extends Phaser.Scene {
         const centerX = this.scale.width / 2;
         const margin = 30;
 
+        // --- Ensure UIScene is running and on top (for header/footer) ---
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
+
         // Respect the persistent UI top and bottom bar heights (if provided by UIScene)
         const bottomBarHeight = this.registry.get('bottomBarHeight') || Math.round(Math.max(64, this.scale.height * 0.10));
         const topBarHeight = this.registry.get('topBarHeight') || 120;
@@ -118,7 +124,7 @@ class HomeScreen extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(11);
 
         // Stat Bars - positioned above the action buttons, confined to usableHeight
-        const barY = this._topOffset + Math.round(usableHeight - 220);
+        const barY = this._topOffset + Math.round(usableHeight - 160);
         this.bars = {
             water: this.createBar("Water", centerX - 230, barY, 0x0099ff, this.data.water),
             hunger: this.createBar("Hunger", centerX + 230, barY, 0x00cc66, this.data.hunger),
@@ -127,7 +133,7 @@ class HomeScreen extends Phaser.Scene {
 
         // Happiness Thermometer - Left side, better positioned
         this.happinessBarX = 80;
-        this.happinessBarY = 600;
+        this.happinessBarY = 700;
         this.happinessBarWidth = 40;
         this.happinessBarHeight = 400;
 
@@ -135,7 +141,7 @@ class HomeScreen extends Phaser.Scene {
 
 
         // Label above thermometer
-        this.add.text(this.happinessBarX, this.happinessBarY - this.happinessBarHeight / 2 - 30, "HAPPINESS", {
+        this.add.text(this.happinessBarX, this.happinessBarY - this.happinessBarHeight / 2 - 20, "HAPPINESS", {
             fontSize: "20px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -232,7 +238,7 @@ class HomeScreen extends Phaser.Scene {
         this.game.events.on("tasks-updated", this.refreshTaskVisuals, this);
 
         // Action Buttons - Organized in a clean grid
-        const buttonStartY = this._topOffset + Math.round(usableHeight - 140);
+        const buttonStartY = this._topOffset + Math.round(usableHeight - 80);
         const buttonSpacing = 130;
         const buttonSize = 100;
         const buttonRadius = 15;

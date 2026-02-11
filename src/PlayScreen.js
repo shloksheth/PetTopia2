@@ -53,7 +53,7 @@ class PlayScreen extends Phaser.Scene {
             });
         }
 
-        this.pet = this.add.sprite(360, 500, spriteKey);
+        this.pet = this.add.sprite(360, 800, spriteKey);
         if (isCat) {
             this.pet.setScale(1.2);
         } else {
@@ -62,11 +62,11 @@ class PlayScreen extends Phaser.Scene {
         this.pet.play(animKey);
 
         // Mini-game: Tap the ball
-        this.ball = this.add.circle(360, 700, 30, 0xff6600)
+        this.ball = this.add.circle(360, 1000, 30, 0xff6600)
             .setInteractive({ useHandCursor: true })
             .setStrokeStyle(3, 0xffffff);
 
-        this.ballText = this.add.text(360, 700, "⚽", {
+        this.ballText = this.add.text(360, 1000, "⚽", {
             fontSize: "40px"
         }).setOrigin(0.5);
 
@@ -109,8 +109,8 @@ class PlayScreen extends Phaser.Scene {
             // Move ball to random position
             this.tweens.add({
                 targets: [this.ball, this.ballText],
-                x: Phaser.Math.Between(100, 620),
-                y: Phaser.Math.Between(400, 900),
+                x: Phaser.Math.Between(100, 600),
+                y: Phaser.Math.Between(900, 1100),
                 duration: 300,
                 ease: "Back.easeOut"
             });
@@ -137,21 +137,7 @@ class PlayScreen extends Phaser.Scene {
         });
 
         // Back button
-        const backBtn = this.add.image(360, 1150, "button")
-            .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5);
-
-        this.add.text(360, 1150, "Back", {
-            fontSize: "32px",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-
-        backBtn.on("pointerdown", () => {
-            if (this.gameActive) {
-                this.endGame();
-            }
-            this.scene.start("HomeScreen");
-        });
+        // Back button hidden (removed)
     }
 
     endGame() {

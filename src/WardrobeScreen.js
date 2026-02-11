@@ -8,6 +8,11 @@ class WardrobeScreen extends Phaser.Scene {
     }
 
     create() {
+                 // --- Ensure UIScene is running and on top (for header/footer) ---
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
         GameData.load();
         this.data = GameData;
 

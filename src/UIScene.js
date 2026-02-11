@@ -62,8 +62,50 @@ class UIScene extends Phaser.Scene {
         // 3. Reordered Buttons (Home is now index 2 - the exact middle)
         const buttons = [
             { icon: "🐾", label: "Pets", action: () => this.openPetSwitcher() },
-            { icon: "🛒", label: "Shop", action: () => this.scene.start("ShopScreen") },
-            { icon: "🏠", label: "Home", action: () => this.scene.start("HomeScreen") }, // Center
+            { icon: "🛒", label: "Shop", action: () => {
+                // List of all main content scenes except UIScene
+                const mainScenes = [
+                    "HomeScreen",
+                    "BathingScreen",
+                    "WardrobeScreen",
+                    "PlayScreen",
+                    "StatsScreen",
+                    "SleepScreen",
+                    "VetScreen",
+                    "CustomizationScreen",
+                    // Add any other main scenes here
+                ];
+                mainScenes.forEach(sceneKey => {
+                    if (this.scene.isActive(sceneKey)) {
+                        this.scene.stop(sceneKey);
+                    }
+                });
+                this.scene.start("ShopScreen");
+            } },
+            {
+                icon: "🏠",
+                label: "Home",
+                action: () => {
+                    // List of all main content scenes except UIScene
+                    const mainScenes = [
+                        "ShopScreen",
+                        "BathingScreen",
+                        "WardrobeScreen",
+                        "PlayScreen",
+                        "StatsScreen",
+                        "SleepScreen",
+                        "VetScreen",
+                        "CustomizationScreen",
+                        // Add any other main scenes here
+                    ];
+                    mainScenes.forEach(sceneKey => {
+                        if (this.scene.isActive(sceneKey)) {
+                            this.scene.stop(sceneKey);
+                        }
+                    });
+                    this.scene.start("HomeScreen");
+                }
+            }, // Center
             { icon: "🛁", label: "Bath", action: () => this.scene.start("BathingScreen") },
             { icon: "👚", label: "Closet", action: () => this.scene.start("WardrobeScreen") }
         ];
