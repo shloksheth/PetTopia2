@@ -129,6 +129,29 @@ const GameData = {
         this.save();
     },
 
+    reset() {
+        this.pets = [];
+        this.activePetIndex = 0;
+        this.coins = 100;
+        this.gems = 10;
+        this.isNight = false;
+        this.maxPetSlots = 2;
+        this.inventory = { pizza: 1, meat: 0, apple: 0, fish: 0, water: 0, toy: 0, cleaningSupply: 0, soap: 0, medicine: 0, toilet_paper: 0 };
+        this.stats = {
+            totalCoinsSpent: 0,
+            totalGemsSpent: 0,
+            perfectCareDays: 0,
+            lastPerfectCareCheck: null
+        };
+        this.achievements = [];
+        this.purchaseHistory = [];
+        this.settings = { useScrollingBar: false };
+
+        localStorage.removeItem("petGameData");
+        localStorage.removeItem("lastSaveTime");
+        this.save();
+    },
+
     toggleDayNight() { this.isNight = !this.isNight; this.save(); },
     setDay() { this.isNight = false; this.save(); },
     setNight() { this.isNight = true; this.save(); },

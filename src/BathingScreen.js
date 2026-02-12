@@ -16,12 +16,10 @@ class BathingScreen extends Phaser.Scene {
 
     create() {
         GameData.load();
-        // Choose background and set bottom bar color
         const bgKey = GameData.isNightTime() ? "BathroomScreenNight" : "BathroomScreenDay";
         const dayBarColor = 0xe6c17a;
         const nightBarColor = 0x1a237e;
         this.registry.set('bottomBarColor', bgKey === "BathroomScreenDay" ? dayBarColor : nightBarColor);
-        // --- Ensure UIScene is running and on top (for header/footer) ---
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
         }
@@ -31,20 +29,16 @@ class BathingScreen extends Phaser.Scene {
         const isCat = this.petData.type === "cat";
         const spriteKey = isCat ? 'idle_cat1' : 'idle1';
 
-        // Set background
         const bg = this.add.image(360, 640, bgKey).setOrigin(0.5);
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
-        // Title
-        this.add.text(360, 100, "Bathing & Grooming 🛁", {
-            fontSize: "42px",
-            fontFamily: "Arial Black",
+        this.add.text(360, 100, "Bathing Ritual", {
+            fontSize: "46px",
+            fontFamily: "Impact",
             color: "#ffffff",
-            stroke: "#000000",
-            strokeThickness: 4
+            stroke: "#0b1116",
+            strokeThickness: 5
         }).setOrigin(0.5);
-
-        // Pet sprite
 
         const animKey = isCat ? "cat_idle" : "dog_idle";
 
@@ -66,158 +60,285 @@ class BathingScreen extends Phaser.Scene {
         }
 
         this.pet = this.add.sprite(360, 520, spriteKey);
-        if (isCat) {
-            this.pet.setScale(1.2);
-        } else {
-            this.pet.setScale(1.0);
-        }
+        this.pet.setScale(isCat ? 1.2 : 1.0);
         this.pet.play(animKey);
 
-        // Cleanliness display
         const cleanliness = this.petData.cleanliness !== undefined ? this.petData.cleanliness : 100;
         this.cleanlinessText = this.add.text(360, 200, `Cleanliness: ${Math.round(cleanliness)}/100`, {
-            fontSize: "32px",
-            fontFamily: "Arial Black",
-            color: "#ffffff",
-            stroke: "#000000",
+            fontSize: "28px",
+            fontFamily: "Trebuchet MS",
+            color: "#eaf6ff",
+            stroke: "#0b1116",
             strokeThickness: 3
         }).setOrigin(0.5);
 
-        // Action buttons
+        this.bathStepSequence = [];
+        this.expectedBathSequence = ["Shower", "Shampoo", "Shower", "Dry"];
+        this.bathBlinkTween = null;
+        this.bathBlinkTarget = null;
+
         const centerX = 360;
-        let yPos = 900;
+        const yPos = 900;
+        const spacing = 150;
 
-        // Shower button
-        const showerBtn = this.add.rectangle(centerX - 130, yPos, 100, 80, 0x3498db, 0.85)
-            .setStrokeStyle(3, 0xffffff)
-            .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5);
+        this.showerButton = this.createBathButton(centerX - spacing, yPos, "Shower", "🚿", 0x2a9dff, 0x9dd9ff);
+        this.shampooButton = this.createBathButton(centerX, yPos, "Shampoo", "🫧", 0x2ad38a, 0x9cffd7);
+        this.dryButton = this.createBathButton(centerX + spacing, yPos, "Dry", "🌬️", 0xff8a3d, 0xffc18f);
 
-        this.add.text(centerX - 130, yPos - 12, "🚿", {
-            fontSize: "40px"
-        }).setOrigin(0.5);
+        this.bathButton = this.createBathButton(centerX, yPos, "Bath", "🛁", 0x2a2f3a, 0x7bdfff);
+        this.bathButton.container.setDepth(30);
 
-        this.add.text(centerX - 130, yPos + 22, "Shower", {
-            fontSize: "16px",
-            fontFamily: "Arial Black",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-
-        showerBtn.on("pointerover", () => showerBtn.setFillStyle(0x5dade2));
-        showerBtn.on("pointerout", () => showerBtn.setFillStyle(0x3498db));
-
-        showerBtn.on("pointerdown", () => {
-            this.performAction("shower", 30);
+        this.showerButton.hit.on("pointerdown", () => {
+            this.playBathAnimation();
+            this.recordBathStep("Shower");
         });
 
-        // Brush button
-        const brushBtn = this.add.rectangle(centerX, yPos, 100, 80, 0x2ecc71, 0.85)
-            .setStrokeStyle(3, 0xffffff)
-            .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5);
-
-        this.add.text(centerX, yPos - 12, "🪮", {
-            fontSize: "40px"
-        }).setOrigin(0.5);
-
-        this.add.text(centerX, yPos + 22, "Brush", {
-            fontSize: "16px",
-            fontFamily: "Arial Black",
-            color: "#ffffff"
-        }).setOrigin(0.5);
-
-        brushBtn.on("pointerover", () => brushBtn.setFillStyle(0x58d68d));
-        brushBtn.on("pointerout", () => brushBtn.setFillStyle(0x2ecc71));
-
-        brushBtn.on("pointerdown", () => {
-            this.performAction("brush", 20);
+        this.shampooButton.hit.on("pointerdown", () => {
+            const soapCount = GameData.inventory.soap || 0;
+            if (soapCount < 5) {
+                this.showMessage("Not enough shampoo");
+                return;
+            }
+            GameData.inventory.soap = soapCount - 5;
+            GameData.save();
+            this.playBathAnimation();
+            this.recordBathStep("Shampoo");
         });
 
-        // Full Clean button
-        const fullCleanBtn = this.add.rectangle(centerX + 130, yPos, 100, 80, 0xe74c3c, 0.85)
-            .setStrokeStyle(3, 0xffffff)
-            .setInteractive({ useHandCursor: true })
+        this.dryButton.hit.on("pointerdown", () => {
+            this.playBathAnimation();
+            this.recordBathStep("Dry");
+        });
+
+        this.bathButton.hit.on("pointerdown", () => {
+            if (this.bathButton.label.text === "Done") {
+                this.scene.start("HomeScreen");
+                return;
+            }
+            this.setBathButtonsVisible(true);
+            this.setBathButtonVisible(false);
+            this.updateBathHint();
+        });
+
+        this.setBathButtonsVisible(false);
+        this.setBathButtonVisible(true);
+    }
+
+    createBathButton(x, y, label, emoji, color, glow) {
+        const container = this.add.container(0, 0).setDepth(20);
+        const shadow = this.add.rectangle(x + 4, y + 5, 130, 90, 0x000000, 0.25).setOrigin(0.5);
+        const bg = this.add.rectangle(x, y, 130, 90, color, 0.95)
+            .setStrokeStyle(2, glow)
             .setOrigin(0.5);
-
-        this.add.text(centerX + 130, yPos - 12, "✨", {
-            fontSize: "40px"
+        const icon = this.add.text(x, y - 12, emoji, {
+            fontSize: "38px"
+        }).setOrigin(0.5);
+        const text = this.add.text(x, y + 24, label, {
+            fontSize: "16px",
+            fontFamily: "Trebuchet MS",
+            color: "#ffffff",
+            stroke: "#0b1116",
+            strokeThickness: 2
         }).setOrigin(0.5);
 
-        this.add.text(centerX + 130, yPos + 22, "Full Clean", {
-            fontSize: "14px",
-            fontFamily: "Arial Black",
-            color: "#ffffff"
-        }).setOrigin(0.5);
+        container.add([shadow, bg, icon, text]);
 
-        fullCleanBtn.on("pointerover", () => fullCleanBtn.setFillStyle(0xec7063));
-        fullCleanBtn.on("pointerout", () => fullCleanBtn.setFillStyle(0xe74c3c));
+        const hit = this.add.rectangle(x, y, 130, 90, 0x000000, 0)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(40);
 
-        fullCleanBtn.on("pointerdown", () => {
-            if (GameData.inventory.cleaningSupply > 0) {
-                GameData.inventory.cleaningSupply--;
-                this.performAction("full", 50);
-                GameData.save();
+        return { container, bg, icon, label: text, hit };
+    }
+
+    setBathButtonsVisible(visible) {
+        [this.showerButton, this.shampooButton, this.dryButton].forEach(btn => {
+            btn.container.setVisible(visible).setActive(visible);
+            btn.hit.setVisible(visible).setActive(visible);
+            if (visible) {
+                btn.hit.setInteractive({ useHandCursor: true });
             } else {
-                this.showMessage("Need cleaning supplies from shop!");
+                btn.hit.disableInteractive();
             }
         });
 
-        // Back button removed
+        if (!visible) {
+            this.stopBathHint();
+        }
     }
 
-    performAction(action, amount) {
-        const pet = GameData.getActivePet();
-        let cleanliness = pet.cleanliness || 100;
+    setBathButtonVisible(visible, labelText) {
+        this.bathButton.container.setVisible(visible).setActive(visible);
+        this.bathButton.hit.setVisible(visible).setActive(visible);
+        if (visible) {
+            if (labelText) this.bathButton.label.setText(labelText);
+            this.bathButton.hit.setInteractive({ useHandCursor: true });
+        } else {
+            this.bathButton.hit.disableInteractive();
+        }
+    }
 
-        const oldValue = cleanliness;
-        cleanliness = Math.min(100, cleanliness + amount);
-        pet.cleanliness = cleanliness;
-        pet.isDirty = false;
+    recordBathStep(step) {
+        const expectedIndex = this.bathStepSequence.length;
+        if (this.expectedBathSequence[expectedIndex] !== step) {
+            this.showMessage("You are doing wrong");
+            this.bathStepSequence = [];
+            this.updateBathHint();
+            return;
+        }
 
-        // Animate pet
+        this.bathStepSequence.push(step);
+
+        const matches = this.bathStepSequence.length === this.expectedBathSequence.length
+            && this.expectedBathSequence.every((value, index) => this.bathStepSequence[index] === value);
+
+        if (matches) {
+            this.showMessage("Bath Complete");
+            this.bathStepSequence = [];
+            this.setBathButtonsVisible(false);
+            this.setBathButtonVisible(true, "Done");
+            this.stopBathHint();
+            this.showBathRewards();
+        } else {
+            this.updateBathHint();
+        }
+    }
+
+    updateBathHint() {
+        const nextStep = this.expectedBathSequence[this.bathStepSequence.length];
+        let target = null;
+        if (nextStep === "Shower") target = this.showerButton.container;
+        if (nextStep === "Shampoo") target = this.shampooButton.container;
+        if (nextStep === "Dry") target = this.dryButton.container;
+
+        if (!target || this.bathBlinkTarget === target) return;
+
+        this.stopBathHint();
+        this.bathBlinkTarget = target;
+        this.bathBlinkTween = this.tweens.add({
+            targets: target,
+            scale: 1.06,
+            alpha: 0.75,
+            duration: 260,
+            yoyo: true,
+            repeat: -1
+        });
+    }
+
+    stopBathHint() {
+        if (this.bathBlinkTween) {
+            this.bathBlinkTween.stop();
+            this.bathBlinkTween = null;
+        }
+        if (this.bathBlinkTarget) {
+            this.bathBlinkTarget.setScale(1).setAlpha(1);
+            this.bathBlinkTarget = null;
+        }
+    }
+
+    playBathAnimation() {
         this.tweens.add({
             targets: this.pet,
-            scaleX: this.pet.scaleX * 1.15,
-            scaleY: this.pet.scaleY * 1.15,
-            duration: 200,
+            scaleX: this.pet.scaleX * 1.1,
+            scaleY: this.pet.scaleY * 1.1,
+            duration: 140,
             yoyo: true
         });
 
-        // Update display
-        this.cleanlinessText.setText(`Cleanliness: ${Math.round(cleanliness)}/100`);
-
-        // Add sparkles effect
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 3; i++) {
             const sparkle = this.add.text(
                 Phaser.Math.Between(300, 420),
                 Phaser.Math.Between(450, 550),
                 "✨",
-                { fontSize: "24px" }
+                { fontSize: "20px" }
             );
             this.tweens.add({
                 targets: sparkle,
-                y: sparkle.y - 50,
+                y: sparkle.y - 40,
                 alpha: 0,
-                duration: 1000,
+                duration: 800,
                 onComplete: () => sparkle.destroy()
             });
         }
+    }
 
-        GameData.addXP(pet, 2);
+    showBathRewards() {
+        const pet = GameData.getActivePet();
+        if (!pet) return;
+
+        pet.cleanliness = 100;
+        GameData.addXP(pet, 10);
+        GameData.coins += 15;
+        if (GameData.stats) {
+            GameData.stats.totalCoinsEarned = (GameData.stats.totalCoinsEarned || 0) + 15;
+        }
         GameData.save();
+        this.registry.events.emit("update-stats");
+        this.cleanlinessText.setText(`Cleanliness: ${Math.round(pet.cleanliness)}/100`);
+
+        const overlay = this.add.rectangle(360, 640, 720, 1280, 0x000000, 0.65)
+            .setDepth(210)
+            .setInteractive();
+
+        const panel = this.add.rectangle(360, 640, 540, 360, 0x15222b, 0.97)
+            .setStrokeStyle(3, 0x7bdfff)
+            .setDepth(211);
+
+        const title = this.add.text(360, 520, "Bath Complete", {
+            fontSize: "40px",
+            fontFamily: "Impact",
+            color: "#ffffff",
+            stroke: "#0b1116",
+            strokeThickness: 4
+        }).setOrigin(0.5).setDepth(212);
+
+        const rewardText = this.add.text(360, 600, "+100 Cleanliness\n+10 XP\n+15 Coins", {
+            fontSize: "28px",
+            fontFamily: "Trebuchet MS",
+            color: "#9fffe0",
+            align: "center"
+        }).setOrigin(0.5).setDepth(212);
+
+        const continueBtn = this.add.text(360, 720, "Continue", {
+            fontSize: "30px",
+            fontFamily: "Trebuchet MS",
+            color: "#0b141a",
+            backgroundColor: "#7bdfff",
+            padding: { x: 22, y: 10 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(212);
+
+        continueBtn.on("pointerdown", () => {
+            [overlay, panel, title, rewardText, continueBtn].forEach(el => el.destroy());
+        });
     }
 
     showMessage(text) {
+        if (this.messageText) {
+            this.messageText.destroy();
+            this.messageText = null;
+        }
+
         const msg = this.add.text(360, 300, text, {
             fontSize: "24px",
-            fontFamily: "Arial Black",
-            color: "#ff4444",
-            backgroundColor: "#000000",
-            padding: { x: 15, y: 8 }
-        }).setOrigin(0.5);
+            fontFamily: "Trebuchet MS",
+            color: "#ffffff",
+            backgroundColor: "#0b141a",
+            padding: { x: 16, y: 8 }
+        }).setOrigin(0.5).setDepth(200);
 
-        this.time.delayedCall(2000, () => {
-            msg.destroy();
+        this.messageText = msg;
+
+        this.tweens.add({
+            targets: msg,
+            alpha: 0,
+            delay: 1600,
+            duration: 300,
+            onComplete: () => {
+                msg.destroy();
+                if (this.messageText === msg) {
+                    this.messageText = null;
+                }
+            }
         });
     }
 }

@@ -77,6 +77,7 @@ class StarterPetScreen extends Phaser.Scene {
         dogSprite.setScale(0.5);
         dogSprite.play("dog_idle");
         dogSprite.setDepth(5);
+        dogSprite.setInteractive({ useHandCursor: true });
 
         const dogCardBg = this.add.rectangle(centerX - 160, cardY, 280, 160, 0x2a5aa0, 0.85)
             .setStrokeStyle(3, 0xffffff)
@@ -110,17 +111,20 @@ class StarterPetScreen extends Phaser.Scene {
             if (this.selectedType !== "dog") dogCardBg.setFillStyle(0x2a5aa0);
         });
 
-        dogBtn.on("pointerdown", () => {
+        const selectDog = () => {
             this.selectedType = "dog";
             dogCardBg.setStrokeStyle(4, 0x00ff00);
             catCardBg.setStrokeStyle(3, 0xffffff);
-        });
+        };
+        dogBtn.on("pointerdown", selectDog);
+        dogSprite.on("pointerdown", selectDog);
 
         // Cat option
         const catSprite = this.add.sprite(centerX + 160, spriteY, "idle_cat1");
         catSprite.setScale(0.6);
         catSprite.play("cat_idle");
         catSprite.setDepth(5);
+        catSprite.setInteractive({ useHandCursor: true });
 
         const catCardBg = this.add.rectangle(centerX + 160, cardY, 280, 160, 0xa02a5a, 0.85)
             .setStrokeStyle(3, 0xffffff)
@@ -154,11 +158,13 @@ class StarterPetScreen extends Phaser.Scene {
             if (this.selectedType !== "cat") catCardBg.setFillStyle(0xa02a5a);
         });
 
-        catBtn.on("pointerdown", () => {
+        const selectCat = () => {
             this.selectedType = "cat";
             catCardBg.setStrokeStyle(4, 0x00ff00);
             dogCardBg.setStrokeStyle(3, 0xffffff);
-        });
+        };
+        catBtn.on("pointerdown", selectCat);
+        catSprite.on("pointerdown", selectCat);
 
         this.selectedType = null;
 
@@ -172,7 +178,7 @@ class StarterPetScreen extends Phaser.Scene {
             strokeThickness: 2
         }).setOrigin(0.5).setDepth(5);
 
-        this.nameInput = this.add.dom(centerX+150, inputY+300).createFromHTML(`
+        this.nameInput = this.add.dom(centerX, inputY + 20).createFromHTML(`
             <input type="text" id="petNameInput" name="petNameInput" placeholder="Pet Name" style="
                 font-size: 24px;
                 padding: 12px;

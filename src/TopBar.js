@@ -62,6 +62,22 @@ class TopBar {
             strokeThickness: 3
         }).setOrigin(0, 0.5).setDepth(12);
 
+        // Notifications Box
+        const notifyBox = scene.add.image(scene.scale.width - 145, 60, "orange_box")
+            .setOrigin(0.5)
+            .setDisplaySize(70, 60)
+            .setDepth(11);
+
+        this.notify = scene.add.text(scene.scale.width - 145, 60, "🔔", {
+            fontSize: "28px",
+            fontFamily: "Arial",
+            color: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(12).setInteractive({ useHandCursor: true });
+
+        this.notify.on("pointerdown", () => this.showTasksPopup());
+
         // Gear Box
         const gearBox = scene.add.image(scene.scale.width - 60, 60, "orange_box")
             .setOrigin(0.5)
@@ -104,6 +120,85 @@ class TopBar {
             }
         });
     }
+
+    getActiveTasks() {
+        const pet = GameData.getActivePet();
+        if (!pet) return [];
+
+        const tasks = [];
+        if (Number(pet.hunger ?? 0) < 65) tasks.push("🍽️ Feed");
+        if (Number(pet.water ?? 0) < 65) tasks.push("🥤 Drink");
+        if (Number(pet.happiness ?? 0) < 65) tasks.push("🎾 Play");
+        if (Number(pet.cleanliness ?? 100) < 65) tasks.push("🧽 Clean");
+        if (Number(pet.health ?? 0) < 65) tasks.push("🏥 Vet");
+        return tasks;
+    }
+
+    createTasksPanel(scene, elements, config = {}) {
+        const tasks = this.getActiveTasks();
+        const panelX = config.x ?? 360;
+        const panelY = config.y ?? 260;
+        const panelWidth = config.width ?? 560;
+        const panelHeight = config.height ?? 110;
+        const depthBase = config.depthBase ?? 52;
+
+        const panel = scene.add.rectangle(panelX, panelY, panelWidth, panelHeight, 0x131820, 0.95)
+            .setStrokeStyle(2, 0x00d1ff)
+            .setDepth(depthBase);
+
+        const titleX = panelX - panelWidth / 2 + 20;
+        const title = scene.add.text(titleX, panelY - 36, "Active Tasks", {
+            fontSize: "22px",
+            fontFamily: "Trebuchet MS",
+            color: "#9fe6ff"
+        }).setOrigin(0, 0.5).setDepth(depthBase + 1);
+
+        elements.push(panel, title);
+
+        if (tasks.length === 0) {
+            const empty = scene.add.text(panelX, panelY + 8, "All clear. Your pet is doing great!", {
+                fontSize: "20px",
+                fontFamily: "Trebuchet MS",
+                color: "#a6ffcf"
+            }).setOrigin(0.5).setDepth(depthBase + 1);
+            elements.push(empty);
+            return;
+        }
+
+        const maxWidth = panelWidth - 40;
+        let startX = panelX - maxWidth / 2 + 10;
+        let startY = panelY + 6;
+        let lineY = startY;
+        let lineX = startX;
+
+        tasks.forEach(task => {
+            const chipText = scene.add.text(0, 0, task, {
+                fontSize: "18px",
+                fontFamily: "Trebuchet MS",
+                color: "#0b141a"
+            }).setOrigin(0, 0.5);
+
+            const paddingX = 12;
+            const paddingY = 6;
+            const chipWidth = chipText.width + paddingX * 2;
+            const chipHeight = chipText.height + paddingY * 2;
+
+            if (lineX + chipWidth > panelX + maxWidth / 2) {
+                lineX = startX;
+                lineY += chipHeight + 10;
+            }
+
+            const chipBg = scene.add.rectangle(lineX + chipWidth / 2, lineY, chipWidth, chipHeight, 0x9fe6ff, 0.9)
+                .setStrokeStyle(1, 0x0b141a)
+                .setDepth(depthBase + 1);
+
+            chipText.setPosition(lineX + paddingX, lineY);
+            chipText.setDepth(depthBase + 2);
+
+            elements.push(chipBg, chipText);
+            lineX += chipWidth + 10;
+        });
+    }
     createTopBarBox(x, y, iconKey, text, textStyle = {}) {
         const container = this.add.container(x, y);
 
@@ -126,6 +221,52 @@ class TopBar {
 
         container.add([box, icon, label]);
         return container;
+    }
+
+    showTasksPopup() {
+        const { scene } = this;
+
+        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.55)
+            .setDepth(60)
+            .setInteractive();
+
+        const panel = scene.add.rectangle(360, 640, 620, 340, 0x15222b, 0.97)
+            .setStrokeStyle(3, 0x00d1ff)
+            .setDepth(61);
+
+        const title = scene.add.text(360, 470, "Notifications", {
+            fontSize: "40px",
+            fontFamily: "Trebuchet MS",
+            color: "#e8f7ff"
+        }).setOrigin(0.5).setDepth(62);
+
+        const elements = [overlay, panel, title];
+        this.createTasksPanel(scene, elements, { x: 360, y: 620, width: 560, height: 140, depthBase: 62 });
+
+        const closeBtn = scene.add.text(360, 770, "Close", {
+            fontSize: "28px",
+            fontFamily: "Trebuchet MS",
+            color: "#0b141a",
+            backgroundColor: "#7bdfff",
+            padding: { x: 22, y: 8 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(62);
+
+        elements.push(closeBtn);
+
+        const closeAll = () => {
+            elements.forEach(el => el.destroy());
+        };
+
+        closeBtn.on("pointerdown", closeAll);
+        overlay.on("pointerdown", closeAll);
+
+        elements.forEach(el => el.setAlpha(0));
+        scene.tweens.add({
+            targets: elements,
+            alpha: 1,
+            duration: 220,
+            ease: "Sine.easeOut"
+        });
     }
 
     createSettingsPopup() {

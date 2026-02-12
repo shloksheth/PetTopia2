@@ -34,6 +34,9 @@ class HomeScreen extends Phaser.Scene {
         }
         this.scene.bringToTop('UIScene');
 
+        this.registry.set("hideHomeButton", true);
+        this.registry.events.emit("toggle-home-button", true);
+
         const centerX = this.scale.width / 2;
         const margin = 30;
 
@@ -72,12 +75,14 @@ class HomeScreen extends Phaser.Scene {
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             this.game.events.off("daynight-changed", this.onDayNightChanged);
+            this.registry.set("hideHomeButton", false);
+            this.registry.events.emit("toggle-home-button", false);
         });
 
         // Ensure all stats are numbers
         this.data.hunger = Number(this.data.hunger ?? 100);
         this.data.water = Number(this.data.water ?? 100);
-        this.data.energy = Number(this.data.energy ?? 100);
+        this.data.health = Number(this.data.health ?? 100);
         this.data.happiness = Number(this.data.happiness ?? 100);
         this.data.health = Number(this.data.health ?? 100);
         this.data.cleanliness = Number(this.data.cleanliness ?? 100);
@@ -128,7 +133,7 @@ class HomeScreen extends Phaser.Scene {
         this.bars = {
             water: this.createBar("Water", centerX - 230, barY, 0x0099ff, this.data.water),
             hunger: this.createBar("Hunger", centerX + 230, barY, 0x00cc66, this.data.hunger),
-            energy: this.createBar("Health", centerX, barY, 0xffcc00, this.data.energy)
+            health: this.createBar("Health", centerX, barY, 0xffcc00, this.data.health)
         };
 
         // Happiness Thermometer - Left side, better positioned
@@ -236,6 +241,8 @@ class HomeScreen extends Phaser.Scene {
 
         // Listener for the event emitted by TimeManager
         this.game.events.on("tasks-updated", this.refreshTaskVisuals, this);
+
+        this.renderTaskNotifications();
 
         // Action Buttons - Organized in a clean grid
         const buttonStartY = this._topOffset + Math.round(usableHeight - 80);
@@ -379,7 +386,7 @@ class HomeScreen extends Phaser.Scene {
             callback: () => {
                 this.setBarValue("hunger", this.data.hunger - 2);
                 this.setBarValue("water", this.data.water - 1.5);
-                this.setBarValue("energy", this.data.energy - 1.5);
+                this.setBarValue("health", this.data.health - 1.5);
                 this.setBarValue("happiness", this.data.happiness - 1);
                 // Cleanliness decreases slowly
                 if (this.data.cleanliness !== undefined) {
@@ -587,7 +594,7 @@ class HomeScreen extends Phaser.Scene {
     updateStatBars(pet) {
         this.setBarValue("hunger", pet.hunger);
         this.setBarValue("water", pet.water);
-        this.setBarValue("energy", pet.energy);
+        this.setBarValue("health", pet.health);
         this.setBarValue("happiness", pet.happiness);
     }
 
@@ -698,6 +705,10 @@ class HomeScreen extends Phaser.Scene {
 
             bar.valueText.setText(`${Math.round(clamped)}/100`);
         }
+
+        if (["hunger", "water", "happiness", "cleanliness", "health"].includes(type)) {
+            this.renderTaskNotifications();
+        }
     }
 
     getHappinessY(happiness) {
@@ -722,6 +733,96 @@ class HomeScreen extends Phaser.Scene {
         this.smellyOverlay.setVisible(pet.isDirty);
         this.poopIcon.setVisible(pet.needsBathroom);
         this.sickIcon.setVisible(pet.isSick);
+
+        this.renderTaskNotifications();
+    }
+
+    getActiveTasks(pet) {
+        const tasks = [];
+        if (Number(pet.hunger ?? 0) < 65) tasks.push("🍽️ Feed");
+        if (Number(pet.water ?? 0) < 65) tasks.push("🥤 Drink");
+        if (Number(pet.happiness ?? 0) < 65) tasks.push("🎾 Play");
+        if (Number(pet.cleanliness ?? 100) < 65) tasks.push("🧽 Clean");
+        if (Number(pet.health ?? 0) < 65) tasks.push("🏥 Vet");
+        return tasks;
+    }
+
+    renderTaskNotifications() {
+        const pet = GameData.getActivePet();
+        if (!pet) return;
+
+        const tasks = this.getActiveTasks(pet);
+
+        if (this.taskToastTween) {
+            this.taskToastTween.stop();
+            this.taskToastTween = null;
+        }
+        if (this.taskToastTimer) {
+            this.taskToastTimer.remove(false);
+            this.taskToastTimer = null;
+        }
+        if (this.taskToast) {
+            this.taskToast.destroy(true);
+            this.taskToast = null;
+        }
+
+        if (tasks.length === 0) return;
+
+        const toastWidth = 360;
+        const toastHeight = 64;
+        const x = this.scale.width - (toastWidth / 2) - 16;
+        const y = this._topOffset + 120;
+
+        const bg = this.add.graphics();
+        bg.fillStyle(0x000000, 0.25);
+        bg.fillRoundedRect(x - toastWidth / 2 + 4, y - toastHeight / 2 + 4, toastWidth, toastHeight, 16);
+        bg.fillStyle(0x15222b, 0.95);
+        bg.fillRoundedRect(x - toastWidth / 2, y - toastHeight / 2, toastWidth, toastHeight, 16);
+        bg.lineStyle(2, 0x00d1ff, 0.9);
+        bg.strokeRoundedRect(x - toastWidth / 2, y - toastHeight / 2, toastWidth, toastHeight, 16);
+
+        const icon = this.add.text(x - toastWidth / 2 + 18, y, "⚑", {
+            fontSize: "24px",
+            fontFamily: "Trebuchet MS",
+            color: "#9ff0ff"
+        }).setOrigin(0, 0.5);
+
+        const text = this.add.text(x - toastWidth / 2 + 52, y, tasks.join(" • "), {
+            fontSize: "18px",
+            fontFamily: "Trebuchet MS",
+            color: "#e8f7ff",
+            wordWrap: { width: toastWidth - 70 }
+        }).setOrigin(0, 0.5);
+
+        this.taskToast = this.add.container(0, 0, [bg, icon, text])
+            .setDepth(120)
+            .setAlpha(0)
+            .setScale(0.98);
+
+        this.taskToastTween = this.tweens.add({
+            targets: this.taskToast,
+            alpha: 1,
+            scale: 1,
+            duration: 220,
+            ease: "Sine.easeOut"
+        });
+
+        this.taskToastTimer = this.time.delayedCall(2200, () => {
+            if (!this.taskToast) return;
+            this.taskToastTween = this.tweens.add({
+                targets: this.taskToast,
+                alpha: 0,
+                y: 6,
+                duration: 260,
+                ease: "Sine.easeIn",
+                onComplete: () => {
+                    if (this.taskToast) {
+                        this.taskToast.destroy(true);
+                        this.taskToast = null;
+                    }
+                }
+            });
+        });
     }
 
 

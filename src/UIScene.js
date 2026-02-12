@@ -28,6 +28,8 @@ class UIScene extends Phaser.Scene {
     create() {
         GameData.load();
 
+        this.hideHomeButton = Boolean(this.registry.get("hideHomeButton"));
+
         // 1. Top Bar (Currency)
         this.topBar = new TopBar(this, {
             coins: GameData.coins,
@@ -44,12 +46,30 @@ class UIScene extends Phaser.Scene {
 
         // Ensure UI is always on top
         this.scene.bringToTop("UIScene");
+
+        this.registry.events.on("toggle-home-button", (hide) => {
+            this.hideHomeButton = Boolean(hide);
+            this.registry.set("hideHomeButton", this.hideHomeButton);
+            this.createBottomNav();
+        });
     }
 
     createBottomNav() {
         const { width, height } = this.scale;
         const navBarHeight = 130;
         const barColor = this.registry.get('bottomBarColor') || 0xFF9000;
+
+        if (this.navElements) {
+            this.navElements.forEach(el => el.destroy());
+        }
+        this.navElements = [];
+
+        this.children.getAll().forEach(child => {
+            if (child.getData && child.getData('isScrollingNavButton')) {
+                child.destroy();
+            }
+        });
+
         const navBg = this.add.rectangle(
             width / 2,
             height - (navBarHeight / 2),
@@ -59,10 +79,13 @@ class UIScene extends Phaser.Scene {
             0.85
         ).setOrigin(0.5).setDepth(1000).setInteractive();
 
+        this.navElements.push(navBg);
+
         // Add a thin white border line at the top of the bar for style
         this.add.line(0, 0, 0, height - navBarHeight, width, height - navBarHeight, 0xffffff, 8)
             .setOrigin(0)
             .setDepth(8001);
+        this.navElements.push(this.children.getAt(this.children.length - 1));
 
         const bottomPadding = -10;
         const iconLift = 85;
@@ -99,13 +122,17 @@ class UIScene extends Phaser.Scene {
             this.createScrollingNav(width, height, bottomPadding, iconLift, labelLift, mainScenes, stopAllScenes);
         } else {
             // CLASSIC MODE - 5 main buttons
-            const buttons = [
+            let buttons = [
                 { icon: "🐾", label: "Pets", action: () => this.openPetSwitcher() },
                 { icon: "🛒", label: "Shop", action: () => { stopAllScenes(); this.scene.start("ShopScreen"); } },
                 { icon: "🏠", label: "Home", action: () => { stopAllScenes(); this.scene.start("HomeScreen"); } },
                 { icon: "🛁", label: "Bath", action: () => { stopAllScenes(); this.scene.start("BathingScreen"); } },
                 { icon: "👚", label: "Closet", action: () => { stopAllScenes(); this.scene.start("WardrobeScreen"); } }
             ];
+
+            if (this.hideHomeButton) {
+                buttons = buttons.filter(btn => btn.label !== "Home");
+            }
 
             buttons.forEach((btn, i) => {
                 const x = (width / buttons.length) * (i + 0.5);
@@ -117,10 +144,14 @@ class UIScene extends Phaser.Scene {
                     .setDepth(1001)
                     .setInteractive({ useHandCursor: true });
 
+                this.navElements.push(circle);
+
                 // Icon Text
                 const iconTxt = this.add.text(x, iconY, btn.icon, { fontSize: "48px" })
                     .setOrigin(0.5)
                     .setDepth(1002);
+
+                this.navElements.push(iconTxt);
 
                 // Label Text
                 const labelTxt = this.add.text(x, labelY, btn.label.toUpperCase(), {
@@ -130,6 +161,8 @@ class UIScene extends Phaser.Scene {
                 })
                     .setOrigin(0.5)
                     .setDepth(1002);
+
+                this.navElements.push(labelTxt);
 
                 // Interactions
                 circle.on("pointerover", () => {
@@ -169,7 +202,7 @@ class UIScene extends Phaser.Scene {
 
     createScrollingNav(width, height, bottomPadding, iconLift, labelLift, mainScenes, stopAllScenes) {
         // All buttons for scrolling mode
-        const buttons = [
+        let buttons = [
             { icon: "🐾", label: "Pets", action: () => this.openPetSwitcher() },
             { icon: "🛒", label: "Shop", action: () => { stopAllScenes(); this.scene.start("ShopScreen"); } },
             { icon: "🏠", label: "Home", action: () => { stopAllScenes(); this.scene.start("HomeScreen"); } },
@@ -181,6 +214,10 @@ class UIScene extends Phaser.Scene {
             { icon: "😴", label: "Sleep", action: () => { stopAllScenes(); this.scene.start("SleepScreen"); } },
             { icon: "🛍️", label: "Purchases", action: () => { stopAllScenes(); this.scene.start("PurchaseScreen"); } }
         ];
+
+        if (this.hideHomeButton) {
+            buttons = buttons.filter(btn => btn.label !== "Home");
+        }
 
         let currentPage = 0;
         const buttonsPerPage = 3;
