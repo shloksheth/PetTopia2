@@ -14,6 +14,14 @@ class SleepScreen extends Phaser.Scene {
     }
 
     create() {
+        // Set bottom bar color
+        this.registry.set('bottomBarColor', 0x2c3e50);
+        // --- Ensure UIScene is running and on top (for header/footer) ---
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
+        
         const topBarHeight = 77;
         const petData = GameData.getActivePet();
         const isCat = petData.type === "cat";

@@ -9,9 +9,15 @@ class StatsScreen extends Phaser.Scene {
     }
 
     create() {
-        GameData.load();
-        // Set bottom bar color for stats screen (orange)
+        // Set bottom bar color
         this.registry.set('bottomBarColor', 0xffa500);
+        // --- Ensure UIScene is running and on top (for header/footer) ---
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
+        
+        GameData.load();
         const stats = GameData.stats;
         const pet = GameData.getActivePet();
         const achievementMap = {

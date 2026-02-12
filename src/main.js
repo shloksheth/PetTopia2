@@ -23,6 +23,7 @@ window.onload = function () {
             StatsScreen,
             PlayScreen,
             PetPurchaseScreen,
+            PurchaseScreen,
             StarterPetScreen
         ],
         scale: {

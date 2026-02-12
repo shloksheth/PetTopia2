@@ -26,20 +26,16 @@ class HomeScreen extends Phaser.Scene {
         }
     }
     create() {
-        const centerX = this.scale.width / 2;
-        const margin = 30;
-
-        // Set bottom bar color for home screen (orange) before UIScene
+        // Set bottom bar color
         this.registry.set('bottomBarColor', 0xFF9000);
-        if (!this.scene.isActive('UIScene')) {
-            this.scene.launch('UIScene');
-        }
-        this.scene.bringToTop('UIScene');
         // --- Ensure UIScene is running and on top (for header/footer) ---
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
         }
         this.scene.bringToTop('UIScene');
+
+        const centerX = this.scale.width / 2;
+        const margin = 30;
 
         // Respect the persistent UI top and bottom bar heights (if provided by UIScene)
         const bottomBarHeight = this.registry.get('bottomBarHeight') || Math.round(Math.max(64, this.scale.height * 0.10));
@@ -359,6 +355,22 @@ class HomeScreen extends Phaser.Scene {
                 this.scene.start("StatsScreen");
             }
         }, 0x9b59b6);
+
+        // Button 6: Purchases (Right-most)
+        createActionButton(centerX + (spacing * 2.5), rowY, "🛍️", "Purchases", () => {
+            if (this.scene.get("PurchaseScreen")) {
+                this.scene.start("PurchaseScreen");
+            }
+        }, 0xf39c12);
+
+        // Settings Button (top right corner)
+        const settingsBtn = this.add.text(this.scale.width - 30, this._topOffset + 25, "⚙️", {
+            fontSize: "36px"
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(50);
+
+        settingsBtn.on("pointerdown", () => {
+            this.showSettingsDialog();
+        });
 
         // Decrease stats over time
         this.time.addEvent({
@@ -923,6 +935,96 @@ class HomeScreen extends Phaser.Scene {
         closeBtn.on("pointerdown", () => this.closeFoodPopup());
 
         this.foodPopup = [popupBg, border, title, closeBtn, ...buttons];
+    }
+
+    showSettingsDialog() {
+        // Load settings from GameData
+        if (!GameData.settings) {
+            GameData.settings = { useScrollingBar: false };
+            GameData.save();
+        }
+
+        const overlay = this.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6)
+            .setDepth(100).setInteractive();
+
+        const panel = this.add.rectangle(360, 640, 600, 500, 0x222222, 0.95)
+            .setStrokeStyle(4, 0xffffff).setDepth(101);
+
+        const title = this.add.text(360, 380, "⚙️ Settings", {
+            fontSize: "42px",
+            fontFamily: "Arial Black",
+            color: "#ffff00"
+        }).setOrigin(0.5).setDepth(102);
+
+        const elements = [];
+
+        // Bottom Bar Style Setting
+        const barStyleY = 480;
+        this.add.text(360, barStyleY - 20, "Bottom Bar Style", {
+            fontSize: "24px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0.5).setDepth(102);
+
+        // Classic Button
+        const classicBtn = this.add.rectangle(200, barStyleY + 30, 140, 50, 
+            !GameData.settings.useScrollingBar ? 0x00ff88 : 0x333333, 0.9)
+            .setStrokeStyle(2, 0xffffff)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(102);
+
+        const classicLabel = this.add.text(200, barStyleY + 30, "Classic\n(5 buttons)", {
+            fontSize: "16px",
+            fontFamily: "Arial Black",
+            color: !GameData.settings.useScrollingBar ? "#000000" : "#ffffff",
+            align: "center"
+        }).setOrigin(0.5).setDepth(102);
+
+        classicBtn.on("pointerdown", () => {
+            GameData.settings.useScrollingBar = false;
+            GameData.save();
+            this.scene.stop("UIScene");
+            this.scene.launch("UIScene");
+            [overlay, panel, title, classicBtn, classicLabel, scrollingBtn, scrollingLabel, closeBtn, ...elements].forEach(el => el.destroy());
+        });
+
+        // Scrolling Button
+        const scrollingBtn = this.add.rectangle(520, barStyleY + 30, 140, 50, 
+            GameData.settings.useScrollingBar ? 0x00ff88 : 0x333333, 0.9)
+            .setStrokeStyle(2, 0xffffff)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(102);
+
+        const scrollingLabel = this.add.text(520, barStyleY + 30, "Scrolling\n(All buttons)", {
+            fontSize: "16px",
+            fontFamily: "Arial Black",
+            color: GameData.settings.useScrollingBar ? "#000000" : "#ffffff",
+            align: "center"
+        }).setOrigin(0.5).setDepth(102);
+
+        scrollingBtn.on("pointerdown", () => {
+            GameData.settings.useScrollingBar = true;
+            GameData.save();
+            this.scene.stop("UIScene");
+            this.scene.launch("UIScene");
+            [overlay, panel, title, classicBtn, classicLabel, scrollingBtn, scrollingLabel, closeBtn, ...elements].forEach(el => el.destroy());
+        });
+
+        // Close Button
+        const closeBtn = this.add.rectangle(360, barStyleY + 130, 150, 50, 0x666666, 0.9)
+            .setStrokeStyle(2, 0xffffff)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(102);
+
+        this.add.text(360, barStyleY + 130, "Close", {
+            fontSize: "24px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0.5).setDepth(102);
+
+        closeBtn.on("pointerdown", () => {
+            [overlay, panel, title, classicBtn, classicLabel, scrollingBtn, scrollingLabel, closeBtn, ...elements].forEach(el => el.destroy());
+        });
     }
 
     closeFoodPopup() {

@@ -63,122 +63,236 @@ class UIScene extends Phaser.Scene {
         this.add.line(0, 0, 0, height - navBarHeight, width, height - navBarHeight, 0xffffff, 8)
             .setOrigin(0)
             .setDepth(8001);
-        // 1. Layout Constants
 
-        const bottomPadding = -10;   // Space between the bottom of the screen and the labels
-        const iconLift = 85;        // How high the icons sit from the bottom
-        const labelLift = 35;       // How high the labels sit from the bottom
+        const bottomPadding = -10;
+        const iconLift = 85;
+        const labelLift = 35;
 
-
-        // 3. Reordered Buttons (Home is now index 2 - the exact middle)
-        const buttons = [
-            { icon: "🐾", label: "Pets", action: () => this.openPetSwitcher() },
-            { icon: "🛒", label: "Shop", action: () => {
-                // List of all main content scenes except UIScene
-                const mainScenes = [
-                    "HomeScreen",
-                    "BathingScreen",
-                    "WardrobeScreen",
-                    "PlayScreen",
-                    "StatsScreen",
-                    "SleepScreen",
-                    "VetScreen",
-                    // Add any other main scenes here
-                ];
-                mainScenes.forEach(sceneKey => {
-                    if (this.scene.isActive(sceneKey)) {
-                        this.scene.stop(sceneKey);
-                    }
-                });
-                this.scene.start("ShopScreen");
-            } },
-            {
-                icon: "🏠",
-                label: "Home",
-                action: () => {
-                    // List of all main content scenes except UIScene
-                    const mainScenes = [
-                        "ShopScreen",
-                        "BathingScreen",
-                        "WardrobeScreen",
-                        "PlayScreen",
-                        "StatsScreen",
-                        "SleepScreen",
-                        "VetScreen",
-                        // Add any other main scenes here
-                    ];
-                    mainScenes.forEach(sceneKey => {
-                        if (this.scene.isActive(sceneKey)) {
-                            this.scene.stop(sceneKey);
-                        }
-                    });
-                    this.scene.start("HomeScreen");
-                }
-            }, // Center
-            { icon: "🛁", label: "Bath", action: () => this.scene.start("BathingScreen") },
-            { icon: "👚", label: "Closet", action: () => this.scene.start("WardrobeScreen") }
+        // All main scenes that should be stopped when navigating
+        const mainScenes = [
+            "HomeScreen",
+            "ShopScreen",
+            "BathingScreen",
+            "WardrobeScreen",
+            "PlayScreen",
+            "StatsScreen",
+            "SleepScreen",
+            "VetScreen",
+            "PetPurchaseScreen",
+            "PurchaseScreen",
+            "StarterPetScreen"
         ];
 
-        buttons.forEach((btn, i) => {
-            const x = (width / buttons.length) * (i + 0.5);
-            const iconY = height - iconLift - bottomPadding;
-            const labelY = height - labelLift - bottomPadding;
+        const stopAllScenes = () => {
+            mainScenes.forEach(sceneKey => {
+                if (this.scene.isActive(sceneKey)) {
+                    this.scene.stop(sceneKey);
+                }
+            });
+        };
 
-            // --- Visual Elements ---
+        // Check if scrolling mode is enabled
+        const useScrolling = GameData.settings && GameData.settings.useScrollingBar;
 
-            // Circular Backdrop
-            const circle = this.add.circle(x, iconY, 42, 0xffffff, 0.1)
-                .setDepth(1001)
-                .setInteractive({ useHandCursor: true });
+        if (useScrolling) {
+            // SCROLLING MODE - All buttons with pagination
+            this.createScrollingNav(width, height, bottomPadding, iconLift, labelLift, mainScenes, stopAllScenes);
+        } else {
+            // CLASSIC MODE - 5 main buttons
+            const buttons = [
+                { icon: "🐾", label: "Pets", action: () => this.openPetSwitcher() },
+                { icon: "🛒", label: "Shop", action: () => { stopAllScenes(); this.scene.start("ShopScreen"); } },
+                { icon: "🏠", label: "Home", action: () => { stopAllScenes(); this.scene.start("HomeScreen"); } },
+                { icon: "🛁", label: "Bath", action: () => { stopAllScenes(); this.scene.start("BathingScreen"); } },
+                { icon: "👚", label: "Closet", action: () => { stopAllScenes(); this.scene.start("WardrobeScreen"); } }
+            ];
 
-            // Icon Text
-            const iconTxt = this.add.text(x, iconY, btn.icon, { fontSize: "48px" })
-                .setOrigin(0.5)
-                .setDepth(1002);
+            buttons.forEach((btn, i) => {
+                const x = (width / buttons.length) * (i + 0.5);
+                const iconY = height - iconLift - bottomPadding;
+                const labelY = height - labelLift - bottomPadding;
 
-            // Label Text
-            const labelTxt = this.add.text(x, labelY, btn.label.toUpperCase(), {
-                fontSize: "12px",
-                fontFamily: "Arial Black",
+                // Circular Backdrop
+                const circle = this.add.circle(x, iconY, 42, 0xffffff, 0.1)
+                    .setDepth(1001)
+                    .setInteractive({ useHandCursor: true });
+
+                // Icon Text
+                const iconTxt = this.add.text(x, iconY, btn.icon, { fontSize: "48px" })
+                    .setOrigin(0.5)
+                    .setDepth(1002);
+
+                // Label Text
+                const labelTxt = this.add.text(x, labelY, btn.label.toUpperCase(), {
+                    fontSize: "12px",
+                    fontFamily: "Arial Black",
+                    color: "#ffffff"
+                })
+                    .setOrigin(0.5)
+                    .setDepth(1002);
+
+                // Interactions
+                circle.on("pointerover", () => {
+                    circle.setFillStyle(0xffffff, 0.2);
+                    this.tweens.add({
+                        targets: [iconTxt, circle],
+                        y: iconY - 12,
+                        scale: 1.15,
+                        duration: 200,
+                        ease: 'Back.easeOut'
+                    });
+                });
+
+                circle.on("pointerout", () => {
+                    circle.setFillStyle(0xffffff, 0.1);
+                    this.tweens.add({
+                        targets: [iconTxt, circle],
+                        y: iconY,
+                        scale: 1.0,
+                        duration: 200,
+                        ease: 'Power2'
+                    });
+                });
+
+                circle.on("pointerdown", () => {
+                    this.tweens.add({
+                        targets: [iconTxt, circle],
+                        scale: 0.85,
+                        duration: 80,
+                        yoyo: true,
+                        onComplete: btn.action
+                    });
+                });
+            });
+        }
+    }
+
+    createScrollingNav(width, height, bottomPadding, iconLift, labelLift, mainScenes, stopAllScenes) {
+        // All buttons for scrolling mode
+        const buttons = [
+            { icon: "🐾", label: "Pets", action: () => this.openPetSwitcher() },
+            { icon: "🛒", label: "Shop", action: () => { stopAllScenes(); this.scene.start("ShopScreen"); } },
+            { icon: "🏠", label: "Home", action: () => { stopAllScenes(); this.scene.start("HomeScreen"); } },
+            { icon: "🛁", label: "Bath", action: () => { stopAllScenes(); this.scene.start("BathingScreen"); } },
+            { icon: "👚", label: "Closet", action: () => { stopAllScenes(); this.scene.start("WardrobeScreen"); } },
+            { icon: "🎾", label: "Play", action: () => { stopAllScenes(); this.scene.start("PlayScreen"); } },
+            { icon: "📊", label: "Stats", action: () => { stopAllScenes(); this.scene.start("StatsScreen"); } },
+            { icon: "🏥", label: "Vet", action: () => { stopAllScenes(); this.scene.start("VetScreen"); } },
+            { icon: "😴", label: "Sleep", action: () => { stopAllScenes(); this.scene.start("SleepScreen"); } },
+            { icon: "🛍️", label: "Purchases", action: () => { stopAllScenes(); this.scene.start("PurchaseScreen"); } }
+        ];
+
+        let currentPage = 0;
+        const buttonsPerPage = 3;
+        const totalPages = Math.ceil(buttons.length / buttonsPerPage);
+
+        const displayButtons = () => {
+            // Clear previous scrolling buttons
+            const existingButtons = this.children.getAll();
+            existingButtons.forEach(child => {
+                if (child.getData && child.getData('isScrollingNavButton')) {
+                    child.destroy();
+                }
+            });
+
+            const startIdx = currentPage * buttonsPerPage;
+            const endIdx = Math.min(startIdx + buttonsPerPage, buttons.length);
+            const pageButtons = buttons.slice(startIdx, endIdx);
+
+            pageButtons.forEach((btn, i) => {
+                const x = (width / pageButtons.length) * (i + 0.5);
+                const iconY = height - iconLift - bottomPadding;
+                const labelY = height - labelLift - bottomPadding;
+
+                const circle = this.add.circle(x, iconY, 42, 0xffffff, 0.1)
+                    .setDepth(1001)
+                    .setInteractive({ useHandCursor: true })
+                    .setData('isScrollingNavButton', true);
+
+                const iconTxt = this.add.text(x, iconY, btn.icon, { fontSize: "48px" })
+                    .setOrigin(0.5)
+                    .setDepth(1002)
+                    .setData('isScrollingNavButton', true);
+
+                const labelTxt = this.add.text(x, labelY, btn.label.toUpperCase(), {
+                    fontSize: "12px",
+                    fontFamily: "Arial Black",
+                    color: "#ffffff"
+                })
+                    .setOrigin(0.5)
+                    .setDepth(1002)
+                    .setData('isScrollingNavButton', true);
+
+                circle.on("pointerover", () => {
+                    circle.setFillStyle(0xffffff, 0.2);
+                    this.tweens.add({
+                        targets: [iconTxt, circle],
+                        y: iconY - 12,
+                        scale: 1.15,
+                        duration: 200,
+                        ease: 'Back.easeOut'
+                    });
+                });
+
+                circle.on("pointerout", () => {
+                    circle.setFillStyle(0xffffff, 0.1);
+                    this.tweens.add({
+                        targets: [iconTxt, circle],
+                        y: iconY,
+                        scale: 1.0,
+                        duration: 200,
+                        ease: 'Power2'
+                    });
+                });
+
+                circle.on("pointerdown", () => {
+                    this.tweens.add({
+                        targets: [iconTxt, circle],
+                        scale: 0.85,
+                        duration: 80,
+                        yoyo: true,
+                        onComplete: btn.action
+                    });
+                });
+            });
+
+            // Update page indicator
+            if (totalPages > 1) {
+                this.add.text(width / 2, height - 8, `${currentPage + 1}/${totalPages}`, {
+                    fontSize: "10px",
+                    color: "#ffffff"
+                }).setOrigin(0.5).setDepth(1002).setData('isScrollingNavButton', true);
+            }
+        };
+
+        displayButtons();
+
+        // Add left/right navigation
+        if (totalPages > 1) {
+            const leftArrow = this.add.text(20, height - 65, "◀", {
+                fontSize: "20px",
                 color: "#ffffff"
-            })
-                .setOrigin(0.5)
-                .setDepth(1002);
+            }).setOrigin(0.5).setDepth(1002).setInteractive({ useHandCursor: true });
 
-            // --- Interactions ---
-
-            circle.on("pointerover", () => {
-                circle.setFillStyle(0xffffff, 0.2);
-                this.tweens.add({
-                    targets: [iconTxt, circle],
-                    y: iconY - 12, // Move up on hover
-                    scale: 1.15,
-                    duration: 200,
-                    ease: 'Back.easeOut'
-                });
+            leftArrow.on("pointerdown", () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    displayButtons();
+                }
             });
 
-            circle.on("pointerout", () => {
-                circle.setFillStyle(0xffffff, 0.1);
-                this.tweens.add({
-                    targets: [iconTxt, circle],
-                    y: iconY,
-                    scale: 1.0,
-                    duration: 200,
-                    ease: 'Power2'
-                });
-            });
+            const rightArrow = this.add.text(width - 20, height - 65, "▶", {
+                fontSize: "20px",
+                color: "#ffffff"
+            }).setOrigin(0.5).setDepth(1002).setInteractive({ useHandCursor: true });
 
-            circle.on("pointerdown", () => {
-                this.tweens.add({
-                    targets: [iconTxt, circle],
-                    scale: 0.85,
-                    duration: 80,
-                    yoyo: true,
-                    onComplete: btn.action
-                });
+            rightArrow.on("pointerdown", () => {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    displayButtons();
+                }
             });
-        });
+        }
     }
 
     openPetSwitcher() {

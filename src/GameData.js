@@ -15,6 +15,8 @@ const GameData = {
         lastPerfectCareCheck: null
     },
     achievements: [],
+    purchaseHistory: [],
+    settings: { useScrollingBar: false },
 
     load() {
         const saved = localStorage.getItem("petGameData");
@@ -31,6 +33,8 @@ const GameData = {
             // FIX: Restore stats and achievements from save
             this.stats = parsed.stats || this.stats;
             this.achievements = parsed.achievements || [];
+            this.purchaseHistory = parsed.purchaseHistory || [];
+            this.settings = parsed.settings || this.settings;
         } else {
             // No default pet - let StarterPetScreen handle pet creation
             this.pets = [];
@@ -52,7 +56,9 @@ const GameData = {
             isNight: this.isNight,
             maxPetSlots: this.maxPetSlots,
             stats: this.stats,
-            achievements: this.achievements
+            achievements: this.achievements,
+            purchaseHistory: this.purchaseHistory,
+            settings: this.settings
         }));
     },
 
@@ -64,6 +70,27 @@ const GameData = {
     unlockAchievement(id) {
         if (!this.achievements.includes(id)) {
             this.achievements.push(id);
+            this.save();
+            return true;
+        }
+        return false;
+    },
+
+    addPurchase(itemName, cost) {
+        this.purchaseHistory.push({
+            itemName: itemName,
+            cost: cost,
+            date: Date.now()
+        });
+        this.save();
+    },
+
+    purchasePetSlot() {
+        const slotCost = 25;
+        if (this.gems >= slotCost) {
+            this.gems -= slotCost;
+            this.maxPetSlots++;
+            this.addPurchase("Pet Slot", slotCost);
             this.save();
             return true;
         }

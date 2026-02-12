@@ -23,14 +23,9 @@ class ShopScreen extends Phaser.Scene {
     }
 
     create() {
-
-        // Set bottom bar color for shop screen (medium orange) before UIScene
+        // Set bottom bar color
         this.registry.set('bottomBarColor', 0xD87C20);
-        if (!this.scene.isActive('UIScene')) {
-            this.scene.launch('UIScene');
-        }
-        this.scene.bringToTop('UIScene');
-         // --- Ensure UIScene is running and on top (for header/footer) ---
+        // --- Ensure UIScene is running and on top (for header/footer) ---
         if (!this.scene.isActive('UIScene')) {
             this.scene.launch('UIScene');
         }
@@ -198,6 +193,9 @@ class ShopScreen extends Phaser.Scene {
 
                 // Save
                 GameData.save();
+
+                // Track purchase
+                GameData.addPurchase(item.label, item.cost);
                 this.registry.events.emit("update-stats");
                 // Update UI
                 owned.setText(`In Stock: ${GameData.inventory[item.key]}`);

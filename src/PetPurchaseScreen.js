@@ -9,6 +9,14 @@ class PetPurchaseScreen extends Phaser.Scene {
     }
 
     create() {
+        // Set bottom bar color
+        this.registry.set('bottomBarColor', 0xFF9000);
+        // --- Ensure UIScene is running and on top (for header/footer) ---
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene');
+        }
+        this.scene.bringToTop('UIScene');
+        
         GameData.load();
         const activePet = GameData.getActivePet();
 
