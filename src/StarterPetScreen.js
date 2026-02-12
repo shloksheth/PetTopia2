@@ -20,27 +20,35 @@ class StarterPetScreen extends Phaser.Scene {
             return;
         }
 
+        // Account for top and bottom bars
+        const bottomBarHeight = this.registry.get('bottomBarHeight') || 140;
+        const topBarHeight = this.registry.get('topBarHeight') || 120;
+        const usableHeight = this.scale.height - topBarHeight - bottomBarHeight;
+        const centerX = this.scale.width / 2;
+        const topOffset = topBarHeight;
+
         // Background
-        const bg = this.add.image(360, 640, "HomeScreenDay").setOrigin(0.5);
-        bg.setDisplaySize(this.scale.width, this.scale.height);
+        const bg = this.add.image(-32.5, topOffset, "HomeScreenDay").setOrigin(0);
+        bg.setDisplaySize(this.scale.width + 75, usableHeight);
 
         // Title
-        this.add.text(360, 150, "Choose Your Starter Pet! 🐾", {
-            fontSize: "48px",
+        const titleY = topOffset + Math.round(usableHeight * 0.06);
+        this.add.text(centerX, titleY, "Choose Your Starter Pet! 🐾", {
+            fontSize: "42px",
             fontFamily: "Arial Black",
             color: "#ffffff",
             stroke: "#000000",
-            strokeThickness: 4
-        }).setOrigin(0.5);
+            strokeThickness: 5
+        }).setOrigin(0.5).setDepth(5);
 
         // Instructions
-        this.add.text(360, 250, "Select a dog or cat to begin your journey", {
-            fontSize: "28px",
+        this.add.text(centerX, titleY + 65, "Select a dog or cat to begin your journey", {
+            fontSize: "24px",
             fontFamily: "Arial",
             color: "#ffff00",
             stroke: "#000000",
             strokeThickness: 2
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(5);
 
         // Create animations
         if (!this.anims.exists("dog_idle")) {
@@ -60,95 +68,152 @@ class StarterPetScreen extends Phaser.Scene {
             });
         }
 
+        // Pet selection area
+        const spriteY = topOffset + Math.round(usableHeight * 0.25);
+        const cardY = topOffset + Math.round(usableHeight * 0.42);
+
         // Dog option
-        const dogSprite = this.add.sprite(200, 500, "idle1");
-        dogSprite.setScale(1.2);
+        const dogSprite = this.add.sprite(centerX - 160, spriteY, "idle1");
+        dogSprite.setScale(0.5);
         dogSprite.play("dog_idle");
+        dogSprite.setDepth(5);
 
-        const dogBtn = this.add.rectangle(200, 650, 250, 150, 0x4444aa, 0.8)
-            .setStrokeStyle(4, 0xffffff)
-            .setInteractive({ useHandCursor: true });
+        const dogCardBg = this.add.rectangle(centerX - 160, cardY, 280, 160, 0x2a5aa0, 0.85)
+            .setStrokeStyle(3, 0xffffff)
+            .setOrigin(0.5)
+            .setDepth(5);
 
-        this.add.text(200, 620, "🐕 Dog", {
-            fontSize: "36px",
+        const dogBtn = this.add.zone(centerX - 160, cardY, 280, 160)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(6);
+
+        this.add.text(centerX - 160, cardY - 50, "🐕 Dog", {
+            fontSize: "40px",
             fontFamily: "Arial Black",
             color: "#ffffff",
             stroke: "#000000",
             strokeThickness: 3
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(6);
 
-        this.add.text(200, 680, "Loyal & Friendly", {
-            fontSize: "24px",
+        this.add.text(centerX - 160, cardY + 20, "Loyal & Friendly", {
+            fontSize: "22px",
             fontFamily: "Arial",
-            color: "#cccccc"
-        }).setOrigin(0.5);
+            color: "#e0e0e0"
+        }).setOrigin(0.5).setDepth(6);
+
+        dogBtn.on("pointerover", () => {
+            this.tweens.add({ targets: dogCardBg, scaleX: 1.08, scaleY: 1.08, duration: 200, ease: "Quad.easeOut" });
+            dogCardBg.setFillStyle(0x3d74c8);
+        });
+        dogBtn.on("pointerout", () => {
+            this.tweens.add({ targets: dogCardBg, scaleX: 1, scaleY: 1, duration: 200, ease: "Quad.easeOut" });
+            if (this.selectedType !== "dog") dogCardBg.setFillStyle(0x2a5aa0);
+        });
 
         dogBtn.on("pointerdown", () => {
-            this.selectPet("dog");
+            this.selectedType = "dog";
+            dogCardBg.setStrokeStyle(4, 0x00ff00);
+            catCardBg.setStrokeStyle(3, 0xffffff);
         });
 
         // Cat option
-        const catSprite = this.add.sprite(520, 500, "idle_cat1");
-        catSprite.setScale(1.4);
+        const catSprite = this.add.sprite(centerX + 160, spriteY, "idle_cat1");
+        catSprite.setScale(0.6);
         catSprite.play("cat_idle");
+        catSprite.setDepth(5);
 
-        const catBtn = this.add.rectangle(520, 650, 250, 150, 0xaa44aa, 0.8)
-            .setStrokeStyle(4, 0xffffff)
-            .setInteractive({ useHandCursor: true });
+        const catCardBg = this.add.rectangle(centerX + 160, cardY, 280, 160, 0xa02a5a, 0.85)
+            .setStrokeStyle(3, 0xffffff)
+            .setOrigin(0.5)
+            .setDepth(5);
 
-        this.add.text(520, 620, "🐱 Cat", {
-            fontSize: "36px",
+        const catBtn = this.add.zone(centerX + 160, cardY, 280, 160)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(6);
+
+        this.add.text(centerX + 160, cardY - 50, "🐱 Cat", {
+            fontSize: "40px",
             fontFamily: "Arial Black",
             color: "#ffffff",
             stroke: "#000000",
             strokeThickness: 3
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(6);
 
-        this.add.text(520, 680, "Independent & Playful", {
-            fontSize: "24px",
+        this.add.text(centerX + 160, cardY + 20, "Independent & Playful", {
+            fontSize: "22px",
             fontFamily: "Arial",
-            color: "#cccccc"
-        }).setOrigin(0.5);
+            color: "#e0e0e0"
+        }).setOrigin(0.5).setDepth(6);
 
-        catBtn.on("pointerdown", () => {
-            this.selectPet("cat");
+        catBtn.on("pointerover", () => {
+            this.tweens.add({ targets: catCardBg, scaleX: 1.08, scaleY: 1.08, duration: 200, ease: "Quad.easeOut" });
+            catCardBg.setFillStyle(0xc83d74);
+        });
+        catBtn.on("pointerout", () => {
+            this.tweens.add({ targets: catCardBg, scaleX: 1, scaleY: 1, duration: 200, ease: "Quad.easeOut" });
+            if (this.selectedType !== "cat") catCardBg.setFillStyle(0xa02a5a);
         });
 
-        // Name input
-        this.add.text(360, 800, "Enter your pet's name:", {
-            fontSize: "28px",
+        catBtn.on("pointerdown", () => {
+            this.selectedType = "cat";
+            catCardBg.setStrokeStyle(4, 0x00ff00);
+            dogCardBg.setStrokeStyle(3, 0xffffff);
+        });
+
+        this.selectedType = null;
+
+        // Name input section
+        const inputY = topOffset + Math.round(usableHeight * 0.70);
+        this.add.text(centerX, inputY - 30, "Name your pet:", {
+            fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#ffffff",
             stroke: "#000000",
             strokeThickness: 2
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(5);
 
-        this.nameInput = this.add.dom(360, 860).createFromHTML(`
-            <input type="text" id="petNameInput" placeholder="Pet Name" style="
-                font-size: 28px;
+        this.nameInput = this.add.dom(centerX+150, inputY+300).createFromHTML(`
+            <input type="text" id="petNameInput" name="petNameInput" placeholder="Pet Name" style="
+                font-size: 24px;
                 padding: 12px;
-                width: 300px;
+                width: 280px;
                 border-radius: 8px;
                 border: 3px solid #00ccff;
                 text-align: center;
                 background-color: #111;
                 color: #fff;
             ">
-        `).setDepth(100);
+        `).setDepth(10);
 
         // Confirm button
-        const confirmBtn = this.add.rectangle(360, 950, 200, 80, 0x00ccff, 0.9)
+        const confirmBtnY = topOffset + Math.round(usableHeight * 0.85);
+        const confirmBtn = this.add.rectangle(centerX, confirmBtnY, 220, 70, 0x00ccff, 0.9)
             .setStrokeStyle(3, 0xffffff)
-            .setInteractive({ useHandCursor: true });
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(5);
 
-        this.add.text(360, 950, "Start!", {
-            fontSize: "32px",
+        this.add.text(centerX, confirmBtnY, "Start!", {
+            fontSize: "36px",
             fontFamily: "Arial Black",
-            color: "#000000"
-        }).setOrigin(0.5);
+            color: "#000000",
+            stroke: "#ffffff",
+            strokeThickness: 2
+        }).setOrigin(0.5).setDepth(6);
+
+        confirmBtn.on("pointerover", () => {
+            confirmBtn.setFillStyle(0x00e6ff);
+        });
+        confirmBtn.on("pointerout", () => {
+            confirmBtn.setFillStyle(0x00ccff);
+        });
 
         confirmBtn.on("pointerdown", () => {
-            const inputElement = this.nameInput.getChildByName("petNameInput");
+            const inputElement = document.getElementById("petNameInput");
+            if (!inputElement) {
+                this.showError("Input field not found!");
+                return;
+            }
             const name = inputElement.value.trim();
             
             if (!name) {
@@ -169,37 +234,23 @@ class StarterPetScreen extends Phaser.Scene {
                 this.showError("Please select a pet type!");
             }
         });
-
-        this.selectedType = null;
-        dogBtn.on("pointerover", () => dogBtn.setFillStyle(0x6666cc));
-        dogBtn.on("pointerout", () => dogBtn.setFillStyle(0x4444aa));
-        catBtn.on("pointerover", () => catBtn.setFillStyle(0xcc66cc));
-        catBtn.on("pointerout", () => catBtn.setFillStyle(0xaa44aa));
-
-        // Update selection
-        const updateSelection = (type) => {
-            this.selectedType = type;
-            if (type === "dog") {
-                dogBtn.setStrokeStyle(6, 0x00ff00);
-                catBtn.setStrokeStyle(4, 0xffffff);
-            } else {
-                catBtn.setStrokeStyle(6, 0x00ff00);
-                dogBtn.setStrokeStyle(4, 0xffffff);
-            }
-        };
-
-        dogBtn.on("pointerdown", () => updateSelection("dog"));
-        catBtn.on("pointerdown", () => updateSelection("cat"));
     }
 
     showError(text) {
-        const error = this.add.text(360, 1020, text, {
+        const bottomBarHeight = this.registry.get('bottomBarHeight') || 140;
+        const topBarHeight = this.registry.get('topBarHeight') || 120;
+        const usableHeight = this.scale.height - topBarHeight - bottomBarHeight;
+        const centerX = this.scale.width / 2;
+        const topOffset = topBarHeight;
+
+        const errorY = topOffset + usableHeight - 50;
+        const error = this.add.text(centerX, errorY, text, {
             fontSize: "24px",
             fontFamily: "Arial Black",
             color: "#ff4444",
             backgroundColor: "#000000",
             padding: { x: 15, y: 8 }
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(20);
 
         this.time.delayedCall(2000, () => {
             error.destroy();

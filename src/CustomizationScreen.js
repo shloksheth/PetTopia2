@@ -1,6 +1,8 @@
 class CustomizationScreen extends Phaser.Scene {
     constructor() {
         super("CustomizationScreen");
+        this.hatEmoji = null;
+        this.collarEmoji = null;
     }
 
     preload() {
@@ -20,7 +22,7 @@ class CustomizationScreen extends Phaser.Scene {
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
         // Title
-        this.add.text(360, 80, "Customization 🎨", {
+        this.add.text(360, 80, "🎨 Pet Styling", {
             fontSize: "48px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -28,131 +30,189 @@ class CustomizationScreen extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5);
 
-        let yPos = 250;
+        // Display pet preview with styling
+        this.petPreviewX = 360;
+        this.petPreviewY = 350;
+        
+        // Pet circle background
+        this.add.circle(this.petPreviewX, this.petPreviewY, 120, 0x6b46c1, 0.8)
+            .setStrokeStyle(4, 0xffffff);
 
-        // Hats Section
-        this.add.text(360, yPos, "Hats", {
-            fontSize: "36px",
-            fontFamily: "Arial Black",
-            color: "#ffff00",
-            stroke: "#000000",
-            strokeThickness: 3
+        // Display pet emoji as large preview
+        const petEmoji = pet.type === "cat" ? "🐱" : "🐶";
+        const petDisplay = this.add.text(this.petPreviewX, this.petPreviewY, petEmoji, {
+            fontSize: "96px"
         }).setOrigin(0.5);
-        yPos += 50;
 
-        const hats = ["None", "Cap", "Crown", "Beanie"];
-        hats.forEach((hat, i) => {
-            const btn = this.add.text(150 + i * 140, yPos, hat === "None" ? "❌" : `🎩`, {
-                fontSize: "40px",
-                backgroundColor: pet.customization.hat === hat ? "#00ff00" : "#444444",
-                padding: { x: 15, y: 10 }
-            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        // Create the style dialog box
+        this.createStyleDialog(pet);
 
-            btn.on("pointerdown", () => {
-                pet.customization.hat = hat === "None" ? null : hat;
-                GameData.save();
-                this.scene.restart();
-            });
-        });
-        yPos += 80;
-
-        // Collars Section
-        this.add.text(360, yPos, "Collars", {
-            fontSize: "36px",
-            fontFamily: "Arial Black",
-            color: "#00ff88",
-            stroke: "#000000",
-            strokeThickness: 3
-        }).setOrigin(0.5);
-        yPos += 50;
-
-        const collars = ["None", "Red", "Blue", "Gold"];
-        collars.forEach((collar, i) => {
-            const color = collar === "None" ? "❌" : 
-                        collar === "Red" ? "🔴" :
-                        collar === "Blue" ? "🔵" : "🟡";
-            const btn = this.add.text(150 + i * 140, yPos, color, {
-                fontSize: "40px",
-                backgroundColor: pet.customization.collar === collar ? "#00ff00" : "#444444",
-                padding: { x: 15, y: 10 }
-            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-            btn.on("pointerdown", () => {
-                pet.customization.collar = collar === "None" ? null : collar;
-                GameData.save();
-                this.scene.restart();
-            });
-        });
-        yPos += 80;
-
-        // Skins Section (Premium - requires gems)
-        this.add.text(360, yPos, "Skins (Premium)", {
-            fontSize: "36px",
-            fontFamily: "Arial Black",
-            color: "#ff00ff",
-            stroke: "#000000",
-            strokeThickness: 3
-        }).setOrigin(0.5);
-        yPos += 50;
-
-        const skins = [
-            { id: "default", name: "Default", cost: 0 },
-            { id: "snoopy", name: "Snoopy", cost: 20 },
-            { id: "garfield", name: "Garfield", cost: 20 }
-        ];
-
-        skins.forEach((skin, i) => {
-           // const isOwned = skin.cost === 0 || GameData.customization.unlockedBackgrounds?.includes(skin.id);
-            const canAfford = GameData.gems >= skin.cost;
-            
-            const btn = this.add.text(200 + i * 160, yPos, skin.name, {
-                fontSize: "24px",
-                fontFamily: "Arial Black",
-                color: isOwned ? "#00ff00" : (canAfford ? "#ffffff" : "#888888"),
-                backgroundColor: isOwned ? "#004400" : "#444444",
-                padding: { x: 15, y: 10 }
-            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-            if (!isOwned) {
-                const costText = this.add.text(200 + i * 160, yPos + 40, `${skin.cost} 💎`, {
-                    fontSize: "20px",
-                    color: "#ffff00"
-                }).setOrigin(0.5);
-            }
-
-            btn.on("pointerdown", () => {
-                if (isOwned) {
-                    pet.customization.skin = skin.id;
-                    GameData.save();
-                    this.scene.restart();
-                } else if (canAfford) {
-                    GameData.gems -= skin.cost;
-                    if (!GameData.customization.unlockedBackgrounds) {
-                        GameData.customization.unlockedBackgrounds = [];
-                    }
-                    GameData.customization.unlockedBackgrounds.push(skin.id);
-                    pet.customization.skin = skin.id;
-                    GameData.stats.totalGemsSpent += skin.cost;
-                    GameData.save();
-                    this.registry.events.emit("update-stats");
-                    this.scene.restart();
-                }
-            });
-        });
-
-        // Back button
-        const backBtn = this.add.image(360, 1150, "button")
+        // Back button at bottom
+        const backBtn = this.add.rectangle(360, 1200, 200, 50, 0xe74c3c, 1)
             .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5);
+            .setStrokeStyle(3, 0xffffff);
 
-        this.add.text(360, 1150, "Back", {
-            fontSize: "32px",
+        this.add.text(360, 1200, "← Back", {
+            fontSize: "28px",
+            fontFamily: "Arial Black",
             color: "#ffffff"
         }).setOrigin(0.5);
+
+        backBtn.on("pointerover", () => backBtn.setFillStyle(0xec7063));
+        backBtn.on("pointerout", () => backBtn.setFillStyle(0xe74c3c));
 
         backBtn.on("pointerdown", () => {
             this.scene.start("HomeScreen");
         });
+
+        this.updateHatDisplay();
+    }
+
+    createStyleDialog(pet) {
+        const dialogWidth = 600;
+        const dialogHeight = 600;
+        const dialogX = 360;
+        const dialogY = 750;
+
+        // Dialog background
+        const dialog = this.add.rectangle(dialogX, dialogY, dialogWidth, dialogHeight, 0x1a1a1a, 0.95)
+            .setStrokeStyle(4, 0x00ff88)
+            .setOrigin(0.5);
+
+        let yOffset = dialogY - dialogHeight / 2 + 40;
+
+        // Hats Section
+        this.add.text(dialogX, yOffset, "🎩 Select Hat", {
+            fontSize: "24px",
+            fontFamily: "Arial Black",
+            color: "#ffff00",
+            stroke: "#000000",
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        yOffset += 45;
+
+        const hats = ["None", "Cap", "Crown", "Beanie"];
+        const hatEmojis = ["❌", "🧢", "👑", "🎿"];
+
+        for (let i = 0; i < hats.length; i++) {
+            const hat = hats[i];
+            const hatEmoji = hatEmojis[i];
+            const isSelected = pet.customization.hat === hat || (pet.customization.hat === null && hat === "None");
+
+            const hatBtn = this.add.rectangle(
+                dialogX - 120 + (i % 2) * 120,
+                yOffset + Math.floor(i / 2) * 50,
+                100,
+                40,
+                isSelected ? 0x00ff88 : 0x333333,
+                1
+            )
+                .setInteractive({ useHandCursor: true })
+                .setStrokeStyle(2, isSelected ? 0xffffff : 0x666666);
+
+            this.add.text(
+                dialogX - 120 + (i % 2) * 120,
+                yOffset + Math.floor(i / 2) * 50,
+                hatEmoji,
+                { fontSize: "24px" }
+            ).setOrigin(0.5);
+
+            hatBtn.on("pointerover", () => {
+                if (!isSelected) hatBtn.setFillStyle(0x444444);
+            });
+
+            hatBtn.on("pointerout", () => {
+                if (!isSelected) hatBtn.setFillStyle(0x333333);
+            });
+
+            hatBtn.on("pointerdown", () => {
+                pet.customization.hat = hat === "None" ? null : hat;
+                GameData.save();
+                this.updateHatDisplay();
+                // Re-create dialog to update selected state
+                this.scene.restart();
+            });
+        }
+
+        yOffset += 120;
+
+        // Collars Section
+        this.add.text(dialogX, yOffset, "⭕ Select Collar", {
+            fontSize: "24px",
+            fontFamily: "Arial Black",
+            color: "#00ff88",
+            stroke: "#000000",
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        yOffset += 45;
+
+        const collars = ["None", "Red", "Blue", "Gold"];
+        const collarEmojis = ["❌", "🔴", "🔵", "🟡"];
+
+        for (let i = 0; i < collars.length; i++) {
+            const collar = collars[i];
+            const collarEmoji = collarEmojis[i];
+            const isSelected = pet.customization.collar === collar || (pet.customization.collar === null && collar === "None");
+
+            const collarBtn = this.add.rectangle(
+                dialogX - 120 + (i % 2) * 120,
+                yOffset + Math.floor(i / 2) * 50,
+                100,
+                40,
+                isSelected ? 0x00ff88 : 0x333333,
+                1
+            )
+                .setInteractive({ useHandCursor: true })
+                .setStrokeStyle(2, isSelected ? 0xffffff : 0x666666);
+
+            this.add.text(
+                dialogX - 120 + (i % 2) * 120,
+                yOffset + Math.floor(i / 2) * 50,
+                collarEmoji,
+                { fontSize: "24px" }
+            ).setOrigin(0.5);
+
+            collarBtn.on("pointerover", () => {
+                if (!isSelected) collarBtn.setFillStyle(0x444444);
+            });
+
+            collarBtn.on("pointerout", () => {
+                if (!isSelected) collarBtn.setFillStyle(0x333333);
+            });
+
+            collarBtn.on("pointerdown", () => {
+                pet.customization.collar = collar === "None" ? null : collar;
+                GameData.save();
+                this.scene.restart();
+            });
+        }
+    }
+
+    updateHatDisplay() {
+        // Remove previous hat if exists
+        if (this.hatEmoji) {
+            this.hatEmoji.destroy();
+        }
+
+        const pet = GameData.getActivePet();
+        if (pet.customization && pet.customization.hat) {
+            const hatEmojis = {
+                "Cap": "🧢",
+                "Crown": "👑",
+                "Beanie": "🎿"
+            };
+
+            const hatEmoji = hatEmojis[pet.customization.hat];
+            if (hatEmoji) {
+                // Position hat above the pet's head
+                this.hatEmoji = this.add.text(
+                    this.petPreviewX,
+                    this.petPreviewY - 100,
+                    hatEmoji,
+                    { fontSize: "60px" }
+                ).setOrigin(0.5);
+            }
+        }
     }
 }
 

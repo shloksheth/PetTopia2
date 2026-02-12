@@ -83,7 +83,6 @@ class UIScene extends Phaser.Scene {
                     "StatsScreen",
                     "SleepScreen",
                     "VetScreen",
-                    "CustomizationScreen",
                     // Add any other main scenes here
                 ];
                 mainScenes.forEach(sceneKey => {
@@ -106,7 +105,6 @@ class UIScene extends Phaser.Scene {
                         "StatsScreen",
                         "SleepScreen",
                         "VetScreen",
-                        "CustomizationScreen",
                         // Add any other main scenes here
                     ];
                     mainScenes.forEach(sceneKey => {

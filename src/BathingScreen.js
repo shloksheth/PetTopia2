@@ -65,7 +65,7 @@ class BathingScreen extends Phaser.Scene {
             });
         }
 
-        this.pet = this.add.sprite(360, 420, spriteKey);
+        this.pet = this.add.sprite(360, 520, spriteKey);
         if (isCat) {
             this.pet.setScale(1.2);
         } else {
@@ -85,48 +85,72 @@ class BathingScreen extends Phaser.Scene {
 
         // Action buttons
         const centerX = 360;
-        let yPos = 700;
+        let yPos = 900;
 
         // Shower button
-        const showerBtn = this.add.image(centerX - 120, yPos, "button")
+        const showerBtn = this.add.rectangle(centerX - 130, yPos, 100, 80, 0x3498db, 0.85)
+            .setStrokeStyle(3, 0xffffff)
             .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5)
-            .setScale(0.9);
+            .setOrigin(0.5);
 
-        this.add.text(centerX - 120, yPos, "🚿 Shower", {
-            fontSize: "24px",
+        this.add.text(centerX - 130, yPos - 12, "🚿", {
+            fontSize: "40px"
+        }).setOrigin(0.5);
+
+        this.add.text(centerX - 130, yPos + 22, "Shower", {
+            fontSize: "16px",
+            fontFamily: "Arial Black",
             color: "#ffffff"
         }).setOrigin(0.5);
+
+        showerBtn.on("pointerover", () => showerBtn.setFillStyle(0x5dade2));
+        showerBtn.on("pointerout", () => showerBtn.setFillStyle(0x3498db));
 
         showerBtn.on("pointerdown", () => {
             this.performAction("shower", 30);
         });
 
         // Brush button
-        const brushBtn = this.add.image(centerX, yPos, "button")
+        const brushBtn = this.add.rectangle(centerX, yPos, 100, 80, 0x2ecc71, 0.85)
+            .setStrokeStyle(3, 0xffffff)
             .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5)
-            .setScale(0.9);
+            .setOrigin(0.5);
 
-        this.add.text(centerX, yPos, "🪮 Brush", {
-            fontSize: "24px",
+        this.add.text(centerX, yPos - 12, "🪮", {
+            fontSize: "40px"
+        }).setOrigin(0.5);
+
+        this.add.text(centerX, yPos + 22, "Brush", {
+            fontSize: "16px",
+            fontFamily: "Arial Black",
             color: "#ffffff"
         }).setOrigin(0.5);
+
+        brushBtn.on("pointerover", () => brushBtn.setFillStyle(0x58d68d));
+        brushBtn.on("pointerout", () => brushBtn.setFillStyle(0x2ecc71));
 
         brushBtn.on("pointerdown", () => {
             this.performAction("brush", 20);
         });
 
         // Full Clean button
-        const fullCleanBtn = this.add.image(centerX + 120, yPos, "button")
+        const fullCleanBtn = this.add.rectangle(centerX + 130, yPos, 100, 80, 0xe74c3c, 0.85)
+            .setStrokeStyle(3, 0xffffff)
             .setInteractive({ useHandCursor: true })
-            .setOrigin(0.5)
-            .setScale(0.9);
+            .setOrigin(0.5);
 
-        this.add.text(centerX + 120, yPos, "✨ Full Clean", {
-            fontSize: "22px",
+        this.add.text(centerX + 130, yPos - 12, "✨", {
+            fontSize: "40px"
+        }).setOrigin(0.5);
+
+        this.add.text(centerX + 130, yPos + 22, "Full Clean", {
+            fontSize: "14px",
+            fontFamily: "Arial Black",
             color: "#ffffff"
         }).setOrigin(0.5);
+
+        fullCleanBtn.on("pointerover", () => fullCleanBtn.setFillStyle(0xec7063));
+        fullCleanBtn.on("pointerout", () => fullCleanBtn.setFillStyle(0xe74c3c));
 
         fullCleanBtn.on("pointerdown", () => {
             if (GameData.inventory.cleaningSupply > 0) {

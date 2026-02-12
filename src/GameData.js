@@ -32,7 +32,8 @@ const GameData = {
             this.stats = parsed.stats || this.stats;
             this.achievements = parsed.achievements || [];
         } else {
-            this.pets = [{ name: "Bella", type: "dog", hunger: 100, energy: 100, happiness: 100, level: 1, xp: 0, cleanliness: 100, health: 100 }];
+            // No default pet - let StarterPetScreen handle pet creation
+            this.pets = [];
             this.activePetIndex = 0;
             this.save();
         }

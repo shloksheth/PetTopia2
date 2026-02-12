@@ -22,7 +22,6 @@ window.onload = function () {
             BathingScreen,
             StatsScreen,
             PlayScreen,
-            CustomizationScreen,
             PetPurchaseScreen,
             StarterPetScreen
         ],
@@ -37,6 +36,10 @@ window.onload = function () {
 
     const game = new Phaser.Game(config);
 
-    // Always start with HomeScreen (default pet is created in GameData.load())
-    game.scene.start("HomeScreen");
+    // Start with StarterPetScreen if no pets exist, otherwise start HomeScreen
+    if (GameData.pets.length === 0) {
+        game.scene.start("StarterPetScreen");
+    } else {
+        game.scene.start("HomeScreen");
+    }
 };

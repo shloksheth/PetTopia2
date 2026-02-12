@@ -137,7 +137,7 @@ class HomeScreen extends Phaser.Scene {
 
         // Happiness Thermometer - Left side, better positioned
         this.happinessBarX = 80;
-        this.happinessBarY = 700;
+        this.happinessBarY = 600;
         this.happinessBarWidth = 40;
         this.happinessBarHeight = 400;
 
@@ -359,13 +359,6 @@ class HomeScreen extends Phaser.Scene {
                 this.scene.start("StatsScreen");
             }
         }, 0x9b59b6);
-
-        // Button 6: Style (Right-most)
-        createActionButton(centerX + (spacing * 2.5), rowY, "🎨", "Style", () => {
-            if (this.scene.get("CustomizationScreen")) {
-                this.scene.start("CustomizationScreen");
-            }
-        }, 0xe67e22);
 
         // Decrease stats over time
         this.time.addEvent({
