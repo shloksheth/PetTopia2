@@ -30,7 +30,7 @@ class PlayScreen extends Phaser.Scene {
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
         // Title
-        this.add.text(360, 100, "Play Time! 🎾", {
+        this.add.text(360, 200, "Play Time! 🎾", {
             fontSize: "48px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -59,7 +59,7 @@ class PlayScreen extends Phaser.Scene {
             });
         }
 
-        this.pet = this.add.sprite(360, 800, spriteKey);
+        this.pet = this.add.sprite(360, 900, spriteKey);
         if (isCat) {
             this.pet.setScale(1.2);
         } else {
@@ -67,17 +67,48 @@ class PlayScreen extends Phaser.Scene {
         }
         this.pet.play(animKey);
 
+        // Update pet display when pet is switched/added/removed elsewhere
+        this._onPetChanged = () => {
+            const petData = GameData.getActivePet();
+            const nowCat = petData.type === "cat";
+            const nowSprite = nowCat ? "idle_cat1" : "idle1";
+            const nowAnim = nowCat ? "cat_idle" : "dog_idle";
+            if (this.pet) {
+                this.pet.setTexture(nowSprite);
+                this.pet.setScale(nowCat ? 1.2 : 1.0);
+                if (this.anims.exists(nowAnim)) this.pet.play(nowAnim);
+            }
+        };
+        this.registry.events.on("pet-switched", this._onPetChanged);
+        this.registry.events.on("pet-added", this._onPetChanged);
+        this.registry.events.on("pet-removed", this._onPetChanged);
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+            if (this._onPetChanged) {
+                this.registry.events.off("pet-switched", this._onPetChanged);
+                this.registry.events.off("pet-added", this._onPetChanged);
+                this.registry.events.off("pet-removed", this._onPetChanged);
+            }
+        });
+
         // Mini-game: Tap the ball
-        this.ball = this.add.circle(360, 1000, 30, 0xff6600)
+        this.ball = this.add.circle(360, 1100, 30, 0xff6600)
             .setInteractive({ useHandCursor: true })
             .setStrokeStyle(3, 0xffffff);
 
-        this.ballText = this.add.text(360, 1000, "⚽", {
+        this.ballText = this.add.text(360, 1100, "⚽", {
             fontSize: "40px"
         }).setOrigin(0.5);
 
         this.score = 0;
-        this.scoreText = this.add.text(360, 200, "Score: 0", {
+        this.scoreText = this.add.text(360, 300, "Score: 0", {
             fontSize: "32px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -85,8 +116,8 @@ class PlayScreen extends Phaser.Scene {
             strokeThickness: 3
         }).setOrigin(0.5);
 
-        this.timeRemaining = 30;
-        this.timerText = this.add.text(360, 250, `Time: ${this.timerText}s`, {
+        this.timeRemaining = 15;
+        this.timerText = this.add.text(360, 350, `Time: ${this.timeRemaining}s`, {
             fontSize: "28px",
             fontFamily: "Arial",
             color: "#ffff00",
@@ -157,8 +188,8 @@ class PlayScreen extends Phaser.Scene {
         const pet = GameData.getActivePet();
         pet.happiness = Math.min(100, pet.happiness + happinessBoost);
         GameData.addXP(pet, xpGain);
-        GameData.coins += coinReward;
-        GameData.stats.totalCoinsEarned += coinReward;
+        GameData.coins += coinReward*2;
+        GameData.stats.totalCoinsEarned += coinReward*2;
         GameData.save();
 
         // Show results
@@ -181,7 +212,7 @@ class PlayScreen extends Phaser.Scene {
             color: "#ffff00"
         }).setOrigin(0.5).setDepth(102);
 
-        const rewardText = this.add.text(360, 620, `+${happinessBoost} Happiness\n+${xpGain} XP\n+${coinReward} Coins`, {
+        const rewardText = this.add.text(360, 620, `+${happinessBoost} Happiness\n+${xpGain} XP\n+${coinReward*2} Coins`, {
             fontSize: "28px",
             fontFamily: "Arial",
             color: "#00ff88",

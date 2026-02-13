@@ -44,8 +44,43 @@ class VetScreen extends Phaser.Scene {
 
         this.pet.play(animKey);
 
+        // Update when pet changes elsewhere
+        this._onPetChanged = () => {
+            const pd = GameData.getActivePet();
+            const nowCat = pd.type === "cat";
+            const nowSprite = nowCat ? "idle_cat1" : "idle1";
+            const nowAnim = nowCat ? "cat_idle" : "dog_idle";
+            if (this.pet) {
+                this.pet.setTexture(nowSprite);
+                this.pet.setScale(nowCat ? 0.85 : 0.7);
+                if (this.anims.exists(nowAnim)) this.pet.play(nowAnim);
+            }
+            if (this.healthText) {
+                const health = pd.health !== undefined ? pd.health : 100;
+                this.healthText.setText(`Health: ${Math.round(health)}/100`);
+            }
+        };
+        this.registry.events.on("pet-switched", this._onPetChanged);
+        this.registry.events.on("pet-added", this._onPetChanged);
+        this.registry.events.on("pet-removed", this._onPetChanged);
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+            if (this._onPetChanged) {
+                this.registry.events.off("pet-switched", this._onPetChanged);
+                this.registry.events.off("pet-added", this._onPetChanged);
+                this.registry.events.off("pet-removed", this._onPetChanged);
+            }
+        });
+
         // Title
-        this.add.text(360, 200, "Vet Checkup 🏥", {
+        this.add.text(360, 200, getString('vetCheckup'), {
             fontSize: "42px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -69,7 +104,7 @@ class VetScreen extends Phaser.Scene {
             .setOrigin(0.5)
             .setScale(0.9);
 
-        this.add.text(360, 400, "Start Checkup", {
+        this.add.text(360, 400, getString('startCheckup'), {
             fontSize: "28px",
             color: "#ffffff"
         }).setOrigin(0.5);
@@ -103,7 +138,7 @@ class VetScreen extends Phaser.Scene {
                     this.healthText.setText(`Health: 100/100`);
                     this.healthText.setColor("#00ff00");
                     healBtn.destroy();
-                    this.add.text(360, 500, "✓ Healed!", {
+                    this.add.text(360, 500, getString('healed'), {
                         fontSize: "28px",
                         color: "#00ff00"
                     }).setOrigin(0.5);
@@ -117,7 +152,7 @@ class VetScreen extends Phaser.Scene {
             .setInteractive({ useHandCursor: true })
             .setOrigin(0.5);
 
-        this.add.text(360, 1100, "Back", {
+        this.add.text(360, 1100, getString('back'), {
             fontSize: "32px",
             color: "#ffffff"
         }).setOrigin(0.5);
@@ -136,7 +171,7 @@ class VetScreen extends Phaser.Scene {
         this.checkupScore = 0;
         this.checkupTarget = 5;
 
-        this.checkupText = this.add.text(360, 600, "Tap the heart! ❤️", {
+        this.checkupText = this.add.text(360, 600, getString('tapHeart'), {
             fontSize: "32px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -215,7 +250,7 @@ class VetScreen extends Phaser.Scene {
         this.healthText.setText(`Health: ${Math.round(pet.health)}/100`);
         this.healthText.setColor(pet.health > 70 ? "#00ff00" : (pet.health > 40 ? "#ffff00" : "#ff0000"));
 
-        const successText = this.add.text(360, 600, "Checkup Complete! +20 Health", {
+        const successText = this.add.text(360, 600, getString('checkupComplete'), {
             fontSize: "32px",
             fontFamily: "Arial Black",
             color: "#00ff00",

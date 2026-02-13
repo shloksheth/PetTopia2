@@ -15,6 +15,16 @@ class StarterPetScreen extends Phaser.Scene {
     create() {
         // Only show if no pets exist
         GameData.load();
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+        });
         if (GameData.pets.length > 0) {
             this.scene.start("HomeScreen");
             return;
@@ -170,7 +180,7 @@ class StarterPetScreen extends Phaser.Scene {
 
         // Name input section
         const inputY = topOffset + Math.round(usableHeight * 0.70);
-        this.add.text(centerX, inputY - 30, "Name your pet:", {
+        this.add.text(centerX, inputY - 50, "Name your pet:", {
             fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -178,11 +188,12 @@ class StarterPetScreen extends Phaser.Scene {
             strokeThickness: 2
         }).setOrigin(0.5).setDepth(5);
 
-        this.nameInput = this.add.dom(centerX, inputY + 20).createFromHTML(`
+        this.nameInput = this.add.dom(centerX+155, inputY+300).createFromHTML(`
             <input type="text" id="petNameInput" name="petNameInput" placeholder="Pet Name" style="
                 font-size: 24px;
-                padding: 12px;
+                padding: 0px;
                 width: 280px;
+                height: 60px;
                 border-radius: 8px;
                 border: 3px solid #00ccff;
                 text-align: center;

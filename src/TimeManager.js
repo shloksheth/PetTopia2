@@ -59,8 +59,8 @@ class TimeManager extends Phaser.Scene {
                 if (!pet) return;
 
                 const roll = Math.random();
-                if (roll < 0.15) pet.needsBathroom = true; // 15% chance
-                if (roll > 0.85) pet.isDirty = true;       // 15% chance
+                if (roll > 0.95) pet.needsBathroom = true; // 5% chance
+                if (roll < 0.10) pet.isDirty = true;       // 10% chance
 
                 GameData.save();
                 this.game.events.emit("tasks-updated");

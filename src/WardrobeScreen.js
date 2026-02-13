@@ -268,6 +268,26 @@ class WardrobeScreen extends Phaser.Scene {
                 this.cameras.main.shake(200, 0.01);
             }
         });
+
+        // Refresh wardrobe view when pets change elsewhere
+        this._onPetChanged = () => this.scene.restart();
+        this.registry.events.on("pet-switched", this._onPetChanged);
+        this.registry.events.on("pet-added", this._onPetChanged);
+        this.registry.events.on("pet-removed", this._onPetChanged);
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+            if (this._onPetChanged) {
+                this.registry.events.off("pet-switched", this._onPetChanged);
+                this.registry.events.off("pet-added", this._onPetChanged);
+                this.registry.events.off("pet-removed", this._onPetChanged);
+            }
+        });
     }
 
     updateHatDisplay() {

@@ -47,10 +47,20 @@ class ShopScreen extends Phaser.Scene {
         this.currentTab = "Food";
         this.displayedElements = [];
 
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+        });
+
         // Background
         this.add.image(360, 640, "shop_bg").setOrigin(0.5);
 
-        this.add.text(360, 80, "Shop", {
+        this.add.text(360, 80, getString('shop'), {
             fontSize: "48px",
             fontFamily: "Arial Black",
             color: "#ffffff"
@@ -58,20 +68,20 @@ class ShopScreen extends Phaser.Scene {
 
         // Define Items
         this.foodItems = [
-            { key: "pizza", label: "Pizza", cost: 15, desc: "A cheesy slice of pizza.", icon: "🍕" },
+            { key: "pizza", label: "Pizza", cost: 9, desc: "A cheesy slice of pizza.", icon: "🍕" },
             { key: "meat", label: "Meat", cost: 20, desc: "A hearty chunk of meat.", icon: "🍖" },
             { key: "apple", label: "Apple", cost: 5, desc: "A fresh, juicy apple.", icon: "🍎" },
             { key: "fish", label: "Fish", cost: 10, desc: "A tasty fish treat.", icon: "🐟" }
         ];
 
         this.suppliesItems = [
-            { key: "soap", label: "Soap", cost: 12, desc: "Cleans your pet.", icon: "🧼" },
+            { key: "soap", label: "Soap", cost: 7, desc: "Cleans your pet.", icon: "🧼" },
             { key: "medicine", label: "Medicine", cost: 30, desc: "Helps heal your pet.", icon: "💊" },
             { key: "toilet_paper", label: "Toilet Paper", cost: 6, desc: "Essential bathroom supply.", icon: "🧻" }
         ];
 
         // Tab Buttons
-        const foodBtn = this.add.text(220, 160, "Food", {
+        const foodBtn = this.add.text(220, 160, getString('food'), {
             fontSize: "32px",
             fontFamily: "Arial Black",
             color: "#00ccff",
@@ -79,7 +89,7 @@ class ShopScreen extends Phaser.Scene {
             padding: { x: 20, y: 10 }
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-        const suppliesBtn = this.add.text(500, 160, "Supplies", {
+        const suppliesBtn = this.add.text(500, 160, getString('supplies'), {
             fontSize: "32px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -165,7 +175,7 @@ class ShopScreen extends Phaser.Scene {
         // Image or Emoji Fallback
         let visual;
         if (this.textures.exists(item.key)) {
-            visual = this.add.image(centerX, centerY - 100, item.key).setScale(0.8);
+            visual = this.add.image(centerX, centerY - 100, item.key).setScale(0.6);
         } else {
             visual = this.add.text(centerX, centerY - 100, item.icon, { fontSize: "120px" }).setOrigin(0.5);
         }
@@ -177,7 +187,7 @@ class ShopScreen extends Phaser.Scene {
         const owned = this.add.text(centerX, centerY + 280, `In Stock: ${GameData.inventory[item.key] || 0}`, { fontSize: "24px" }).setOrigin(0.5);
 
         const buyBtn = this.add.image(centerX, centerY + 360, "button").setScale(0.8).setInteractive({ useHandCursor: true });
-        const buyLabel = this.add.text(centerX, centerY + 360, "BUY", { fontSize: "32px", fontFamily: "Arial Black" }).setOrigin(0.5);
+        const buyLabel = this.add.text(centerX, centerY + 360, getString('buy').toUpperCase(), { fontSize: "32px", fontFamily: "Arial Black" }).setOrigin(0.5);
 
         buyBtn.on("pointerdown", () => {
             if (GameData.coins >= item.cost) {

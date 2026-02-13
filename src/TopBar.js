@@ -409,92 +409,130 @@ class TopBar {
 
 
     showSettingsMenu() {
-        const { scene } = this;
-        const overlay = scene.add.rectangle(360, 660, 720, 1280, 0x000000, 0.6)
-            .setDepth(50)
+        const scene = this.scene;
+        if (!GameData.settings) {
+            GameData.settings = { useScrollingBar: false };
+            GameData.save();
+        }
+
+        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6)
+            .setDepth(200)
             .setInteractive();
 
-        const panel = scene.add.rectangle(360, 520, 600, 720, 0x222222, 0.95)
-            .setStrokeStyle(4, 0xffffff)
-            .setDepth(51);
+        const panel = scene.add.rectangle(360, 640, 520, 820, 0x0f1620, 0.98)
+            .setStrokeStyle(3, 0x00d1ff)
+            .setDepth(201);
 
-        const title = scene.add.text(360, 210, "Settings", {
-            fontSize: "48px",
+        const title = scene.add.text(360, 300, "Settings", {
+            fontSize: "42px",
             fontFamily: "Arial Black",
-            color: "#ffffff",
-            stroke: "#000000",
-            strokeThickness: 4
-        }).setOrigin(0.5).setDepth(52);
+            color: "#e8f7ff"
+        }).setOrigin(0.5).setDepth(202);
 
-        const elements = [];
-        let y = 310;
-        const spacing = 70;
+        const elements = [overlay, panel, title];
 
-        // Music
-        elements.push(...this.createToggle(scene, 160, y, "Music", true));
-        y += spacing;
+        let y = 360;
+        const leftX = 210;
 
-        // SFX
-        elements.push(...this.createToggle(scene, 160, y, "SFX", true));
-        y += spacing;
+        elements.push(...this.createSettingToggle(scene, leftX, y, 'music', "Music", GameData.settings.music ?? true));
+        y += 75;
+        elements.push(...this.createSettingToggle(scene, leftX, y, 'sfx', "SFX", GameData.settings.sfx ?? true));
+        y += 75;
 
-        // Language
-        const langLabel = scene.add.text(160, y, "Language:", {
-            fontSize: "30px",
+        // English/Español language selection
+        const langSelectLabel = scene.add.text(leftX, y, "Language:", {
+            fontSize: "28px",
             fontFamily: "Arial Black",
             color: "#ffffff"
-        }).setOrigin(0, 0.5).setDepth(52);
-        const langToggle = scene.add.text(460, y, "English", {
-            fontSize: "30px",
+        }).setOrigin(0, 0.5).setDepth(202);
+        
+        const engBtn = scene.add.rectangle(435, y, 100, 50, 
+            GameData.settings.language === "English" ? 0x00ff88 : 0x333333, 0.95)
+            .setStrokeStyle(2, 0xffffff).setInteractive({ useHandCursor: true }).setDepth(202);
+        const engLabel = scene.add.text(435, y, "English", {
+            fontSize: "20px",
             fontFamily: "Arial Black",
-            color: "#00ccff",
-            backgroundColor: "#000",
-            padding: { x: 12, y: 6 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(52);
-        langToggle.on("pointerdown", () => {
-            langToggle.setText(langToggle.text === "English" ? "Español" : "English");
+            color: GameData.settings.language === "English" ? "#000000" : "#ffffff"
+        }).setOrigin(0.5).setDepth(203);
+        
+        const espBtn = scene.add.rectangle(550, y, 100, 50,
+            GameData.settings.language === "Español" ? 0x00ff88 : 0x333333, 0.95)
+            .setStrokeStyle(2, 0xffffff).setInteractive({ useHandCursor: true }).setDepth(202);
+        const espLabel = scene.add.text(550, y, "Español", {
+            fontSize: "20px",
+            fontFamily: "Arial Black",
+            color: GameData.settings.language === "Español" ? "#000000" : "#ffffff"
+        }).setOrigin(0.5).setDepth(203);
+        
+        engBtn.on("pointerdown", () => {
+            GameData.settings.language = "English";
+            engBtn.setFillStyle(0x00ff88);
+            espBtn.setFillStyle(0x333333);
+            engLabel.setColor("#000000");
+            espLabel.setColor("#ffffff");
+            GameData.save();
+            scene.game.events.emit("language-changed", "English");
         });
-        elements.push(langLabel, langToggle);
-        y += spacing;
+        
+        espBtn.on("pointerdown", () => {
+            GameData.settings.language = "Español";
+            espBtn.setFillStyle(0x00ff88);
+            engBtn.setFillStyle(0x333333);
+            espLabel.setColor("#000000");
+            engLabel.setColor("#ffffff");
+            GameData.save();
+            scene.game.events.emit("language-changed", "Español");
+        });
+        
+        elements.push(langSelectLabel, engBtn, engLabel, espBtn, espLabel);
+        y += 35;
 
-        // Fullscreen
-        const [fsLabel, fsToggle] = this.createToggle(scene, 160, y, "Fullscreen", scene.scale.isFullscreen);
+        const [fsLabel, fsToggle] = this.createToggle(scene, leftX, y, "Fullscreen", scene.scale.isFullscreen);
         fsToggle.on("pointerdown", () => {
             const isOn = scene.scale.isFullscreen;
             if (isOn) scene.scale.stopFullscreen();
             else scene.scale.startFullscreen();
-            fsToggle.setText(isOn ? "Off" : "On");
+            const newText = isOn ? "Off" : "On";
+            fsToggle.setText(newText);
+            if (!GameData.settings) GameData.settings = {};
+            GameData.settings.fullscreen = !isOn;
+            GameData.save();
         });
         elements.push(fsLabel, fsToggle);
-        y += spacing;
+        y += 35;
 
-        // Text Size
-        const textSizeLabel = scene.add.text(160, y, "Text Size:", {
-            fontSize: "30px",
+        const textSizeLabel = scene.add.text(leftX, y, "Text Size:", {
+            fontSize: "28px",
             fontFamily: "Arial Black",
             color: "#ffffff"
-        }).setOrigin(0, 0.5).setDepth(52);
-        const textSizeToggle = scene.add.text(460, y, "Normal", {
-            fontSize: "30px",
+        }).setOrigin(0, 0.5).setDepth(202);
+        const textSizeToggle = scene.add.text(510, y, GameData.settings.textSize || "Normal", {
+            fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#00ccff",
-            backgroundColor: "#000",
-            padding: { x: 12, y: 6 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(52);
+            backgroundColor: "#061018",
+            padding: { x: 14, y: 8 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(202);
         textSizeToggle.on("pointerdown", () => {
-            textSizeToggle.setText(textSizeToggle.text === "Normal" ? "Large" : "Normal");
+            const newSize = textSizeToggle.text === "Normal" ? "Large" : "Normal";
+            textSizeToggle.setText(newSize);
+            if (!GameData.settings) GameData.settings = {};
+            GameData.settings.textSize = newSize;
+            GameData.save();
         });
         elements.push(textSizeLabel, textSizeToggle);
-        y += spacing;
+        y += 60;
 
-        // Reset
-        const resetBtn = scene.add.text(360, y, "Reset Game Progress", {
-            fontSize: "30px",
+        elements.push(...this.createToggle(scene, leftX, y, "High Contrast", GameData.settings.highContrast ?? false));
+        y += 30;
+
+        const resetBtn = scene.add.text(360, y+50, "Reset Game Progress", {
+            fontSize: "24px",
             fontFamily: "Arial Black",
-            color: "#ff4444",
-            backgroundColor: "#000",
+            color: "#ff8888",
+            backgroundColor: "#061018",
             padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(52);
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(202);
         resetBtn.on("pointerdown", () => {
             if (confirm("Are you sure you want to reset all progress?")) {
                 GameData.reset();
@@ -502,35 +540,69 @@ class TopBar {
             }
         });
         elements.push(resetBtn);
-        y += spacing;
 
-        // High Contrast
-        elements.push(...this.createToggle(scene, 160, y, "High Contrast", false));
-        y += spacing;
+        // Bottom style selector
+        const barStyleY = 830;
+        const barStyleLabel = scene.add.text(360, barStyleY - 30, "Bottom Bar Style", {
+            fontSize: "22px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0.5).setDepth(202);
 
-        // Close
-        const closeBtn = scene.add.text(360, y, "Close", {
-            fontSize: "32px",
+        const classicBtn = scene.add.rectangle(240, barStyleY + 30, 140, 60,
+            !GameData.settings.useScrollingBar ? 0x00ff88 : 0x333333, 0.95)
+            .setStrokeStyle(2, 0xffffff).setInteractive({ useHandCursor: true }).setDepth(202);
+        const classicLabel = scene.add.text(240, barStyleY + 30, "Classic\n(5 buttons)", {
+            fontSize: "16px",
+            fontFamily: "Arial Black",
+            color: !GameData.settings.useScrollingBar ? "#000000" : "#ffffff",
+            align: "center"
+        }).setOrigin(0.5).setDepth(203);
+
+        const scrollingBtn = scene.add.rectangle(480, barStyleY + 30, 140, 60,
+            GameData.settings.useScrollingBar ? 0x00ff88 : 0x333333, 0.95)
+            .setStrokeStyle(2, 0xffffff).setInteractive({ useHandCursor: true }).setDepth(202);
+        const scrollingLabel = scene.add.text(480, barStyleY + 30, "Scrolling\n(All buttons)", {
+            fontSize: "16px",
+            fontFamily: "Arial Black",
+            color: GameData.settings.useScrollingBar ? "#000000" : "#ffffff",
+            align: "center"
+        }).setOrigin(0.5).setDepth(203);
+
+        classicBtn.on("pointerdown", () => {
+            GameData.settings.useScrollingBar = false;
+            GameData.save();
+            setTimeout(() => scene.scene.restart(), 60);
+            elements.forEach(el => el.destroy());
+        });
+
+        scrollingBtn.on("pointerdown", () => {
+            GameData.settings.useScrollingBar = true;
+            GameData.save();
+            setTimeout(() => scene.scene.restart(), 60);
+            elements.forEach(el => el.destroy());
+        });
+
+        const closeBtn = scene.add.text(360, 960, "Close", {
+            fontSize: "26px",
             fontFamily: "Arial Black",
             color: "#ffffff",
             backgroundColor: "#444",
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(52);
-        closeBtn.on("pointerdown", () => {
-            [overlay, panel, title, closeBtn, ...elements].forEach(el => el.destroy());
-        });
-        elements.push(closeBtn);
-    }
+            padding: { x: 24, y: 12 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(202);
+        closeBtn.on("pointerdown", () => elements.forEach(el => el.destroy()));
 
+        elements.push(barStyleLabel, classicBtn, classicLabel, scrollingBtn, scrollingLabel, closeBtn);
+    }
 
     showCreditsPopup() {
         const { scene } = this;
 
-        const overlay = scene.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6)
+        const overlay = scene.add.rectangle(360, 740, 720, 1280, 0x000000, 0.6)
             .setDepth(60)
             .setInteractive();
 
-        const panel = scene.add.rectangle(360, 640, 500, 300, 0x222222, 0.95)
+        const panel = scene.add.rectangle(360, 740, 700, 620, 0x222222, 0.95)
             .setStrokeStyle(4, 0xffffff)
             .setDepth(61);
 
@@ -584,4 +656,38 @@ class TopBar {
 
         return [label, toggle];
     }
+
+    createSettingToggle(scene, x, y, key, labelText, initialState) {
+        const label = scene.add.text(x, y, labelText, {
+            fontSize: "30px",
+            fontFamily: "Arial Black",
+            color: "#ffffff"
+        }).setOrigin(0, 0.5).setDepth(202);
+
+        const rect = scene.add.rectangle(x + 260, y, 120, 42, initialState ? 0x00ff88 : 0x333333, 0.95)
+            .setOrigin(0.5)
+            .setDepth(202)
+            .setInteractive({ useHandCursor: true });
+
+        const txt = scene.add.text(x + 260, y, initialState ? "On" : "Off", {
+            fontSize: "22px",
+            fontFamily: "Arial Black",
+            color: initialState ? "#000000" : "#ffffff"
+        }).setOrigin(0.5).setDepth(203);
+
+        rect.on("pointerdown", () => {
+            const newState = !Boolean(GameData.settings?.[key]);
+            if (!GameData.settings) GameData.settings = {};
+            GameData.settings[key] = newState;
+            GameData.save();
+            rect.setFillStyle(newState ? 0x00ff88 : 0x333333);
+            txt.setText(newState ? "On" : "Off");
+            txt.setColor(newState ? "#000000" : "#ffffff");
+        });
+
+        return [label, rect, txt];
+    }
 }
+
+// Ensure TopBar is globally available
+window.TopBar = TopBar;

@@ -22,7 +22,7 @@ class CustomizationScreen extends Phaser.Scene {
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
         // Title
-        this.add.text(360, 80, "🎨 Pet Styling", {
+        this.add.text(360, 80, getString('petStyling'), {
             fontSize: "48px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -52,7 +52,7 @@ class CustomizationScreen extends Phaser.Scene {
             .setInteractive({ useHandCursor: true })
             .setStrokeStyle(3, 0xffffff);
 
-        this.add.text(360, 1200, "← Back", {
+        this.add.text(360, 1200, "← " + getString('back'), {
             fontSize: "28px",
             fontFamily: "Arial Black",
             color: "#ffffff"
@@ -63,6 +63,16 @@ class CustomizationScreen extends Phaser.Scene {
 
         backBtn.on("pointerdown", () => {
             this.scene.start("HomeScreen");
+        });
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
         });
 
         this.updateHatDisplay();
@@ -82,7 +92,7 @@ class CustomizationScreen extends Phaser.Scene {
         let yOffset = dialogY - dialogHeight / 2 + 40;
 
         // Hats Section
-        this.add.text(dialogX, yOffset, "🎩 Select Hat", {
+        this.add.text(dialogX, yOffset, "🎩 " + getString('selectHat'), {
             fontSize: "24px",
             fontFamily: "Arial Black",
             color: "#ffff00",
@@ -137,7 +147,7 @@ class CustomizationScreen extends Phaser.Scene {
         yOffset += 120;
 
         // Collars Section
-        this.add.text(dialogX, yOffset, "⭕ Select Collar", {
+        this.add.text(dialogX, yOffset, "⭕ " + getString('selectCollar'), {
             fontSize: "24px",
             fontFamily: "Arial Black",
             color: "#00ff88",

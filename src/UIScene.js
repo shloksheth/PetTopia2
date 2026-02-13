@@ -52,6 +52,16 @@ class UIScene extends Phaser.Scene {
             this.registry.set("hideHomeButton", this.hideHomeButton);
             this.createBottomNav();
         });
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            this.createBottomNav();
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+        });
     }
 
     createBottomNav() {
@@ -341,7 +351,7 @@ class UIScene extends Phaser.Scene {
             .setStrokeStyle(4, 0xffffff)
             .setDepth(101);
 
-        const title = this.add.text(360, 300, "Your Pets", {
+        const title = this.add.text(460, 300, "Your Pets", {
             fontSize: "42px",
             fontFamily: "Arial Black",
             color: "#ffffff"
@@ -378,9 +388,10 @@ class UIScene extends Phaser.Scene {
             }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
 
             switchBtn.on("pointerdown", () => {
-                GameData.save();
                 GameData.switchToPet(i);
-                this.scene.get("HomeScreen").loadPet();
+                GameData.save();
+                this.registry.events.emit("update-stats", { coins: GameData.coins, gems: GameData.gems });
+                this.registry.events.emit("pet-switched", i);
                 [overlay, panel, title, ...elements].forEach(el => el.destroy());
             });
 
@@ -393,8 +404,23 @@ class UIScene extends Phaser.Scene {
             }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(102);
 
             removeBtn.on("pointerdown", () => {
-                [overlay, panel, title, ...elements].forEach(el => el.destroy());
-                this.scene.get("HomeScreen").showRemovePetDialog(i);
+                const confirmOverlay = this.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6).setDepth(150).setInteractive();
+                const confirmPanel = this.add.rectangle(360, 640, 520, 300, 0x330000, 0.95).setStrokeStyle(3, 0xff4444).setDepth(151);
+                const confirmText = this.add.text(360, 580, `Remove ${pet.name}?`, { fontSize: "28px", color: "#ff4444" }).setOrigin(0.5).setDepth(152);
+                const delBtn = this.add.text(300, 680, "Delete", { fontSize: "26px", backgroundColor: "#ff4444", padding: { x: 12, y: 8 } }).setOrigin(0.5).setInteractive().setDepth(152);
+                const cancelBtn = this.add.text(420, 680, "Cancel", { fontSize: "26px", backgroundColor: "#444", padding: { x: 12, y: 8 } }).setOrigin(0.5).setInteractive().setDepth(152);
+
+                delBtn.on("pointerdown", () => {
+                    GameData.removePet(i);
+                    GameData.save();
+                    this.registry.events.emit("update-stats", { coins: GameData.coins, gems: GameData.gems });
+                    this.registry.events.emit("pet-removed", i);
+                    [confirmOverlay, confirmPanel, confirmText, delBtn, cancelBtn, overlay, panel, title, ...elements].forEach(el => el.destroy());
+                });
+
+                cancelBtn.on("pointerdown", () => {
+                    [confirmOverlay, confirmPanel, confirmText, delBtn, cancelBtn].forEach(el => el.destroy());
+                });
             });
 
             elements.push(box, nameText, typeText, switchBtn, removeBtn);
@@ -411,7 +437,83 @@ class UIScene extends Phaser.Scene {
 
             addBtn.on("pointerdown", () => {
                 [overlay, panel, title, addBtn, ...elements].forEach(el => el.destroy());
-                this.scene.get("HomeScreen").showAddPetDialog();
+
+                const aOverlay = this.add.rectangle(360, 640, 720, 1280, 0x000000, 0.6).setDepth(150).setInteractive();
+                const aPanel = this.add.rectangle(360, 640, 550, 650, 0x0f1620, 0.98).setStrokeStyle(3, 0x00d1ff).setDepth(151);
+                const aTitle = this.add.text(360, 350, "Add a New Pet", { fontSize: "42px", fontFamily: "Arial Black", color: "#e8f7ff" }).setOrigin(0.5).setDepth(152);
+
+                // Pet Name Label
+                const nameLabel = this.add.text(360, 395, "Pet Name", { fontSize: "22px", fontFamily: "Arial Black", color: "#9fe6ff" }).setOrigin(0.5).setDepth(152);
+
+                // Pet Name Input with styled box
+                const inputBg = this.add.rectangle(360, 445, 280, 50, 0x061018, 0.9).setStrokeStyle(2, 0x00ccff).setDepth(151);
+                const nameInput = this.add.dom(518, 725).createFromHTML(`
+                    <input type="text" id="petNameInput" placeholder="Enter pet name..." style="font-size: 20px; padding: 10px; width: 250px; border-radius: 4px; border: none; background-color: #061018; color: #00ccff; text-align: center;">
+                `).setDepth(152);
+
+                // Pet Type Select Label
+                const typeLabel = this.add.text(360, 505, "Choose Pet Type", { fontSize: "22px", fontFamily: "Arial Black", color: "#9fe6ff" }).setOrigin(0.5).setDepth(152);
+
+                // Dog Button
+                const dogBtnBg = this.add.rectangle(240, 565, 130, 80, 0x333333, 0.9).setStrokeStyle(2, 0xffffff).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(151);
+                const dogEmoji = this.add.text(240, 545, "🐕", { fontSize: "40px" }).setOrigin(0.5).setDepth(152);
+                const dogLabel = this.add.text(240, 590, "Dog", { fontSize: "18px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0.5).setDepth(152);
+
+                // Cat Button
+                const catBtnBg = this.add.rectangle(480, 565, 130, 80, 0x333333, 0.9).setStrokeStyle(2, 0xffffff).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(151);
+                const catEmoji = this.add.text(480, 545, "🐱", { fontSize: "40px" }).setOrigin(0.5).setDepth(152);
+                const catLabel = this.add.text(480, 590, "Cat", { fontSize: "18px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0.5).setDepth(152);
+
+                let selectedType = null;
+
+                dogBtnBg.on("pointerdown", () => {
+                    selectedType = "dog";
+                    dogBtnBg.setFillStyle(0x00ccff).setStrokeStyle(3, 0x00ff88);
+                    catBtnBg.setFillStyle(0x333333).setStrokeStyle(2, 0xffffff);
+                    dogLabel.setColor("#000000");
+                    catLabel.setColor("#ffffff");
+                });
+
+                catBtnBg.on("pointerdown", () => {
+                    selectedType = "cat";
+                    catBtnBg.setFillStyle(0x00ccff).setStrokeStyle(3, 0x00ff88);
+                    dogBtnBg.setFillStyle(0x333333).setStrokeStyle(2, 0xffffff);
+                    catLabel.setColor("#000000");
+                    dogLabel.setColor("#ffffff");
+                });
+
+                // Confirm Button
+                const confirmBtnBg = this.add.rectangle(280, 695, 180, 50, 0x00ff88, 0.95).setStrokeStyle(2, 0xffffff).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(151);
+                const confirmBtn = this.add.text(280, 695, "Create", { fontSize: "24px", fontFamily: "Arial Black", color: "#000000" }).setOrigin(0.5).setDepth(152);
+
+                confirmBtnBg.on("pointerover", () => confirmBtnBg.setFillStyle(0x00ffaa));
+                confirmBtnBg.on("pointerout", () => confirmBtnBg.setFillStyle(0x00ff88));
+
+                confirmBtnBg.on("pointerdown", () => {
+                    const el = document.getElementById("petNameInput");
+                    const name = el ? el.value.trim() : "";
+                    if (name && selectedType) {
+                        GameData.addPet(name, selectedType);
+                        GameData.save();
+                        this.registry.events.emit("update-stats", { coins: GameData.coins, gems: GameData.gems });
+                        this.registry.events.emit("pet-added", { name, type: selectedType });
+                        [aOverlay, aPanel, aTitle, nameLabel, inputBg, nameInput, typeLabel, dogBtnBg, dogEmoji, dogLabel, catBtnBg, catEmoji, catLabel, confirmBtnBg, confirmBtn, cancelBtnBg, cancelBtn].forEach(x => x.destroy());
+                    } else {
+                        this.cameras.main.shake(200, 0.01);
+                    }
+                });
+
+                // Cancel Button
+                const cancelBtnBg = this.add.rectangle(440, 695, 180, 50, 0x444444, 0.95).setStrokeStyle(2, 0xffffff).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(151);
+                const cancelBtn = this.add.text(440, 695, "Cancel", { fontSize: "24px", fontFamily: "Arial Black", color: "#ffffff" }).setOrigin(0.5).setDepth(152);
+
+                cancelBtnBg.on("pointerover", () => cancelBtnBg.setFillStyle(0x555555));
+                cancelBtnBg.on("pointerout", () => cancelBtnBg.setFillStyle(0x444444));
+
+                cancelBtnBg.on("pointerdown", () => {
+                    [aOverlay, aPanel, aTitle, nameLabel, inputBg, nameInput, typeLabel, dogBtnBg, dogEmoji, dogLabel, catBtnBg, catEmoji, catLabel, confirmBtnBg, confirmBtn, cancelBtnBg, cancelBtn].forEach(x => x.destroy());
+                });
+
             });
 
             elements.push(addBtn);

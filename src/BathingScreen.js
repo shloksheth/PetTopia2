@@ -63,6 +63,41 @@ class BathingScreen extends Phaser.Scene {
         this.pet.setScale(isCat ? 1.2 : 1.0);
         this.pet.play(animKey);
 
+        // Update pet display when active pet changes
+        this._onPetChanged = () => {
+            const pd = GameData.getActivePet();
+            const nowCat = pd.type === "cat";
+            const nowSprite = nowCat ? "idle_cat1" : "idle1";
+            const nowAnim = nowCat ? "cat_idle" : "dog_idle";
+            if (this.pet) {
+                this.pet.setTexture(nowSprite);
+                this.pet.setScale(nowCat ? 1.2 : 1.0);
+                if (this.anims.exists(nowAnim)) this.pet.play(nowAnim);
+            }
+            if (this.cleanlinessText) {
+                const cleanliness = pd.cleanliness !== undefined ? pd.cleanliness : 100;
+                this.cleanlinessText.setText(`Cleanliness: ${Math.round(cleanliness)}/100`);
+            }
+        };
+        this.registry.events.on("pet-switched", this._onPetChanged);
+        this.registry.events.on("pet-added", this._onPetChanged);
+        this.registry.events.on("pet-removed", this._onPetChanged);
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+            if (this._onPetChanged) {
+                this.registry.events.off("pet-switched", this._onPetChanged);
+                this.registry.events.off("pet-added", this._onPetChanged);
+                this.registry.events.off("pet-removed", this._onPetChanged);
+            }
+        });
+
         const cleanliness = this.petData.cleanliness !== undefined ? this.petData.cleanliness : 100;
         this.cleanlinessText = this.add.text(360, 200, `Cleanliness: ${Math.round(cleanliness)}/100`, {
             fontSize: "28px",
@@ -95,11 +130,11 @@ class BathingScreen extends Phaser.Scene {
 
         this.shampooButton.hit.on("pointerdown", () => {
             const soapCount = GameData.inventory.soap || 0;
-            if (soapCount < 5) {
+            if (soapCount < 2) {
                 this.showMessage("Not enough shampoo");
                 return;
             }
-            GameData.inventory.soap = soapCount - 5;
+            GameData.inventory.soap = soapCount - 2;
             GameData.save();
             this.playBathAnimation();
             this.recordBathStep("Shampoo");

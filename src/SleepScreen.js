@@ -31,8 +31,36 @@ class SleepScreen extends Phaser.Scene {
             .setDisplaySize(this.scale.width, this.scale.height - topBarHeight);
 
         const sleepKey = isCat ? "cat_sleep" : "dog_sleep";
-        const pet = this.add.image(this.scale.width / 2, 760, sleepKey).setOrigin(0.5);
-        pet.setScale((this.scale.width * 0.32) / pet.width);
+        this.pet = this.add.image(this.scale.width / 2, 760, sleepKey).setOrigin(0.5);
+        this.pet.setScale((this.scale.width * 0.32) / this.pet.width);
+
+        // Update pet if switched elsewhere
+        this._onPetChanged = () => {
+            const pd = GameData.getActivePet();
+            const key = pd.type === "cat" ? "cat_sleep" : "dog_sleep";
+            if (this.pet) {
+                this.pet.setTexture(key);
+                this.pet.setScale((this.scale.width * 0.32) / this.pet.width);
+            }
+        };
+        this.registry.events.on("pet-switched", this._onPetChanged);
+        this.registry.events.on("pet-added", this._onPetChanged);
+        this.registry.events.on("pet-removed", this._onPetChanged);
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+            if (this._onPetChanged) {
+                this.registry.events.off("pet-switched", this._onPetChanged);
+                this.registry.events.off("pet-added", this._onPetChanged);
+                this.registry.events.off("pet-removed", this._onPetChanged);
+            }
+        });
 
         this.sleepText = this.add.text(this.scale.width / 2, 280, "", {
             fontSize: "46px",
@@ -106,11 +134,11 @@ class SleepScreen extends Phaser.Scene {
     startSleep() {
         this.isSleeping = true;
 
-        const duration = 30;
+        const duration = 15;
         let remaining = duration;
 
         this.sleepText.setText("Sleeping… 😴");
-        this.countdownText.setText("30s remaining");
+        this.countdownText.setText("15s remaining");
         this.countdownText.setVisible(true);
 
         this.progressBg.setVisible(true);

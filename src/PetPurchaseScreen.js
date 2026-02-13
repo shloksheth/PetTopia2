@@ -25,7 +25,7 @@ class PetPurchaseScreen extends Phaser.Scene {
         bg.setDisplaySize(this.scale.width, this.scale.height);
 
         // Title
-        this.add.text(360, 80, "Pet Store 🐾", {
+        this.add.text(360, 80, getString('petStore'), {
             fontSize: "48px",
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -34,7 +34,7 @@ class PetPurchaseScreen extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Info text
-        this.add.text(360, 150, "Unlock new pets with gems!", {
+        this.add.text(360, 150, getString('unlockNewPets'), {
             fontSize: "28px",
             fontFamily: "Arial",
             color: "#ffff00",
@@ -151,13 +151,23 @@ class PetPurchaseScreen extends Phaser.Scene {
             .setInteractive({ useHandCursor: true })
             .setOrigin(0.5);
 
-        this.add.text(360, 1200, "Back", {
+        this.add.text(360, 1200, getString('back'), {
             fontSize: "32px",
             color: "#ffffff"
         }).setOrigin(0.5);
 
         backBtn.on("pointerdown", () => {
             this.scene.start("HomeScreen");
+        });
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
         });
     }
 

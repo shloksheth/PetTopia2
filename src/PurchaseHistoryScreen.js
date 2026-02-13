@@ -31,7 +31,7 @@ class PurchaseScreen extends Phaser.Scene {
         const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.25).setOrigin(0.5);
 
         // Title
-        this.add.text(width/2, topOffset + 40, "🛍️ Purchase History", { 
+        this.add.text(width/2, topOffset + 40, getString('purchaseHistory'), { 
             fontSize: "40px", 
             fontFamily: "Arial Black",
             color: "#ffffff",
@@ -49,7 +49,7 @@ class PurchaseScreen extends Phaser.Scene {
 
         if (purchases.length === 0) {
             // No purchases yet
-            this.add.text(width/2, startY + 200, "No purchases yet!", { 
+            this.add.text(width/2, startY + 200, getString('noPurchasesYet'), { 
                 fontSize: "28px", 
                 fontFamily: "Arial Black",
                 color: "#888888",
@@ -57,7 +57,7 @@ class PurchaseScreen extends Phaser.Scene {
                 strokeThickness: 2
             }).setOrigin(0.5);
 
-            this.add.text(width/2, startY + 250, "Visit the shop to buy items", { 
+            this.add.text(width/2, startY + 250, getString('visitShop'), { 
                 fontSize: "20px", 
                 fontFamily: "Arial",
                 color: "#aaaaaa"
@@ -71,19 +71,19 @@ class PurchaseScreen extends Phaser.Scene {
             const headerBg = this.add.rectangle(width/2, itemY, 620, 40, 0x3a3a3a, 0.9)
                 .setStrokeStyle(2, 0xffffff);
 
-            this.add.text(width/2 - 250, itemY, "Item", { 
+            this.add.text(width/2 - 250, itemY, getString('item'), { 
                 fontSize: "18px", 
                 fontFamily: "Arial Black",
                 color: "#ffff00"
             }).setOrigin(0, 0.5);
 
-            this.add.text(width/2, itemY, "Cost", { 
+            this.add.text(width/2, itemY, getString('cost'), { 
                 fontSize: "18px", 
                 fontFamily: "Arial Black",
                 color: "#ffff00"
             }).setOrigin(0.5);
 
-            this.add.text(width/2 + 240, itemY, "Date", { 
+            this.add.text(width/2 + 240, itemY, getString('date'), { 
                 fontSize: "18px", 
                 fontFamily: "Arial Black",
                 color: "#ffff00"
@@ -105,7 +105,7 @@ class PurchaseScreen extends Phaser.Scene {
                     color: "#ffffff"
                 }).setOrigin(0, 0.5);
 
-                this.add.text(width/2, itemY, `-${purchase.cost} 💎`, { 
+                this.add.text(width/2, itemY, `-${purchase.cost} 🪙`, { 
                     fontSize: "16px", 
                     fontFamily: "Arial Black",
                     color: "#ff6b6b"
@@ -128,18 +128,28 @@ class PurchaseScreen extends Phaser.Scene {
             this.add.rectangle(width/2, totalY, 620, 45, 0x3a3a3a, 0.95)
                 .setStrokeStyle(2, 0xffff00);
 
-            this.add.text(width/2 - 250, totalY, "Total Spent", { 
+            this.add.text(width/2 - 250, totalY, getString('totalSpent'), { 
                 fontSize: "18px", 
                 fontFamily: "Arial Black",
                 color: "#ffff00"
             }).setOrigin(0, 0.5);
 
-            this.add.text(width/2, totalY, `${totalSpent} 💎`, { 
+            this.add.text(width/2, totalY, `${totalSpent} 🪙`, { 
                 fontSize: "18px", 
                 fontFamily: "Arial Black",
                 color: "#ffff00"
             }).setOrigin(0.5);
         }
+
+        // Listen for language changes
+        this._onLanguageChanged = () => {
+            setTimeout(() => this.scene.restart(), 60);
+        };
+        this.game.events.on("language-changed", this._onLanguageChanged);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            if (this._onLanguageChanged) this.game.events.off("language-changed", this._onLanguageChanged);
+        });
     }
 }
 

@@ -16,7 +16,7 @@ const GameData = {
     },
     achievements: [],
     purchaseHistory: [],
-    settings: { useScrollingBar: false },
+    settings: { useScrollingBar: false, language: "English" },
 
     load() {
         const saved = localStorage.getItem("petGameData");
@@ -104,7 +104,7 @@ const GameData = {
 
     addPet(name, type) {
         if (this.pets.length >= this.maxPetSlots) return false;
-        this.pets.push({ name, type, hunger: 100, energy: 100, happiness: 100, level: 1, xp: 0 });
+        this.pets.push({ name, type, hunger: 100, energy: 100, happiness: 100, water: 100, health: 100, cleanliness: 100, level: 1, xp: 0 });
         this.activePetIndex = this.pets.length - 1;
         this.save();
         return true;
